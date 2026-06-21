@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Windows.Input;
 using WinDeploy.Core;
 using WinDeploy.Core.Engine;
 using WinDeploy.Core.Models;
@@ -23,6 +24,10 @@ public sealed class InstallCenterViewModel : ObservableObject
     public ObservableCollection<string> Profiles { get; } = new();
     public RelayCommand StartCommand { get; }
     public RelayCommand OpenDetailCommand { get; }
+    public RelayCommand SelectAllCommand { get; }
+    public RelayCommand InvertCommand { get; }
+    public RelayCommand RestoreCommand { get; }
+    private Dictionary<string, bool>? _snapshot;
 
     /// <summary>Raised when the user clicks 开始安装.</summary>
     public event Action? StartRequested;
@@ -34,6 +39,9 @@ public sealed class InstallCenterViewModel : ObservableObject
     {
         StartCommand = new RelayCommand(_ => StartRequested?.Invoke(), _ => SelectedCount > 0);
         OpenDetailCommand = new RelayCommand(p => { if (p is AppItemViewModel vm) DetailRequested?.Invoke(vm); });
+        SelectAllCommand = new RelayCommand(_ => SetAll(true));
+        InvertCommand = new RelayCommand(_ => Invert());
+        RestoreCommand = new RelayCommand(_ => Restore(), _ => _snapshot != null);
     }
 
     private bool _isLoading = true;
@@ -115,6 +123,37 @@ public sealed class InstallCenterViewModel : ObservableObject
         OnPropertyChanged(nameof(Subtitle));
     }
 
+    private void Snapshot()
+        => _snapshot = Groups.SelectMany(g => g.Items).ToDictionary(i => i.Id, i => i.IsSelected);
+
+    private void SetAll(bool value)
+    {
+        Snapshot();
+        foreach (var g in Groups) { foreach (var i in g.Items) i.IsSelected = value; g.RaiseCount(); }
+        RefreshCounts();
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    private void Invert()
+    {
+        Snapshot();
+        foreach (var g in Groups) { foreach (var i in g.Items) i.IsSelected = !i.IsSelected; g.RaiseCount(); }
+        RefreshCounts();
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    private void Restore()
+    {
+        if (_snapshot == null) return;
+        foreach (var g in Groups)
+        {
+            foreach (var i in g.Items)
+                if (_snapshot.TryGetValue(i.Id, out var v)) i.IsSelected = v;
+            g.RaiseCount();
+        }
+        RefreshCounts();
+    }
+
     private void ApplyFilter()
     {
         var q = _searchText.Trim();
@@ -138,6 +177,8 @@ public sealed class InstallCenterViewModel : ObservableObject
         if (_catalog == null) return;
         try
         {
+            Snapshot();
+            CommandManager.InvalidateRequerySuggested();
             var profile = CatalogLoader.LoadProfile(_catalogDir, name);
             var ids = Selection.Resolve(_catalog, profile, null, false, null)
                 .Select(i => i.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);

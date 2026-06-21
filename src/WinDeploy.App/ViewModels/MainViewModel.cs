@@ -87,6 +87,21 @@ public sealed class MainViewModel : ObservableObject
         });
         await Task.WhenAll(tasks);
         Install.IsLoading = false;
+        _ = PrefetchDetailsAsync(items);
+    }
+
+    /// <summary>Prefetch and cache detail metadata for every item so card clicks are instant.</summary>
+    private static async Task PrefetchDetailsAsync(IReadOnlyList<AppItemViewModel> items)
+    {
+        using var gate = new SemaphoreSlim(6);
+        var tasks = items.Select(async vm =>
+        {
+            await gate.WaitAsync();
+            try { await DetailService.FetchAsync(vm.Model); }
+            catch { /* ignore */ }
+            finally { gate.Release(); }
+        });
+        await Task.WhenAll(tasks);
     }
 
     private void OnStartRequested()

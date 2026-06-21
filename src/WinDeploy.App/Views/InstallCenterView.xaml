@@ -12,12 +12,48 @@
       <StackPanel>
         <TextBlock Text="软件安装中心" FontSize="20" FontWeight="SemiBold" />
         <TextBlock Text="{Binding Subtitle}" FontSize="13" Foreground="{StaticResource TextSecondary}" Margin="0,3,0,0" />
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+          <Button Content="全选" Style="{StaticResource MiniButton}" Command="{Binding SelectAllCommand}" />
+          <Button Content="反选" Style="{StaticResource MiniButton}" Command="{Binding InvertCommand}" Margin="8,0,0,0" />
+          <Button Content="恢复" Style="{StaticResource MiniButton}" Command="{Binding RestoreCommand}" Margin="8,0,0,0"
+                  ToolTip="恢复到上一次「全选 / 反选 / 切换预设」之前的勾选状态" />
+        </StackPanel>
       </StackPanel>
+
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-        <TextBox Width="150" Height="32" VerticalContentAlignment="Center" Padding="8,0"
-                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-        <ComboBox Width="120" Height="32" Margin="8,0,0,0"
-                  ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" />
+        <!-- 搜索框（带水印 + 说明） -->
+        <Grid Width="150" Height="32" ToolTip="搜索：按名称 / 简介 / id 过滤软件列表">
+          <TextBox VerticalContentAlignment="Center" Padding="8,0"
+                   Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+          <TextBlock Text="搜索软件…" Foreground="{StaticResource TextTertiary}" Margin="10,0,0,0"
+                     VerticalAlignment="Center" IsHitTestVisible="False">
+            <TextBlock.Style>
+              <Style TargetType="TextBlock">
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding SearchText}" Value=""><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+          </TextBlock>
+        </Grid>
+
+        <!-- 预设下拉（带水印 + 说明） -->
+        <Grid Width="120" Height="32" Margin="8,0,0,0" ToolTip="预设：选 dev / full / ai-station 一键套用对应勾选">
+          <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" />
+          <TextBlock Text="选择预设…" Foreground="{StaticResource TextTertiary}" Margin="9,0,0,0"
+                     VerticalAlignment="Center" IsHitTestVisible="False">
+            <TextBlock.Style>
+              <Style TargetType="TextBlock">
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding SelectedProfile}" Value="{x:Null}"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+          </TextBlock>
+        </Grid>
+
         <Button Content="{Binding StartLabel}" Style="{StaticResource PrimaryButton}"
                 Margin="8,0,0,0" Command="{Binding StartCommand}" />
       </StackPanel>

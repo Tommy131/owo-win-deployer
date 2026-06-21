@@ -12,6 +12,7 @@ public sealed class ArpEntry
     public string? InstallDate { get; init; }
     public string? Homepage { get; init; }
     public string? InstallLocation { get; init; }
+    public string? DisplayIcon { get; init; }
     public long EstimatedSizeKb { get; init; }
 }
 
@@ -51,6 +52,7 @@ public static class Arp
                     InstallDate = e.GetValue("InstallDate") as string,
                     Homepage = (e.GetValue("URLInfoAbout") as string) ?? (e.GetValue("HelpLink") as string),
                     InstallLocation = e.GetValue("InstallLocation") as string,
+                    DisplayIcon = e.GetValue("DisplayIcon") as string,
                     EstimatedSizeKb = e.GetValue("EstimatedSize") is int sz ? sz : 0,
                 });
             }
