@@ -35,7 +35,7 @@ public sealed class MainViewModel : ObservableObject
     public SettingsViewModel Settings { get; } = new();
 
     public string AppName => WinDeploy.App.AppInfo.Name;
-    public string WindowTitle => $"{WinDeploy.App.AppInfo.TitleWithVersion} · 软件安装中心";
+    public string WindowTitle => WinDeploy.App.AppInfo.TitleWithVersion;
 
     public MainViewModel()
     {
@@ -44,6 +44,12 @@ public sealed class MainViewModel : ObservableObject
         Install.DetailRequested += OnDetailRequested;
         Install.LaunchRequested += item => _ = RunQuickOpAsync(item.Model, "launch");
         Install.StopRequested += item => _ = ConfirmRiskAndRun(item.Model, "stop");
+        Install.InstallCardRequested += item => _ = QuickInstallAsync(item.Model);
+        Install.UninstallCardRequested += item => _ = ConfirmUninstallAndRun(item.Model);
+        Install.RestartCardRequested += item => _ = ConfirmRiskAndRun(item.Model, "restart");
+        Install.UpdateCardRequested += item => _ = ConfirmUpdateAndRun(item.Model);
+        Install.OpenDirRequested += item => OpenInstallDir(item.Model);
+        Install.OpenHomepageRequested += item => OpenHomepage(item.Model);
         Install.RefreshRequested += () => _ = DetectAllAsync();
         Processes.OperationRequested += (item, op) => _ = ConfirmRiskAndRun(item, op);
         Progress.CancelRequested += () => _cts?.Cancel();
@@ -301,13 +307,7 @@ public sealed class MainViewModel : ObservableObject
     private void OnDetailRequested(AppItemViewModel item)
     {
         var vm = new DetailViewModel(item, _resolver, back: () => Current = Install);
-        vm.InstallRequested += m => _ = m.Id switch
-        {
-            "mingw" => InstallMinGwAsync(m),
-            "mingw-builds" => InstallMingwBuildsAsync(m),
-            "ntpwedit" or "openspeedy" or "creaminstaller" => InstallFromGitHubReleaseAsync(m),
-            _ => RunOpAsync(m, "install"),
-        };
+        vm.InstallRequested += m => _ = DispatchInstall(m);
         vm.UpdateRequested += m => _ = ConfirmUpdateAndRun(m);
         vm.DowngradeRequested += m => _ = ConfirmDowngradeAndRun(m);
         vm.UninstallRequested += (m, purge) => _ = RunOpAsync(m, "uninstall", purge);
@@ -316,6 +316,66 @@ public sealed class MainViewModel : ObservableObject
         vm.RestartRequested += m => _ = ConfirmRiskAndRun(m, "restart");
         vm.EnvVarsRequested += () => SelectedNav = NavItems.First(n => ReferenceEquals(n.Page, EnvVars));
         Current = vm;
+    }
+
+    /// <summary>Route an install by item: MinGW / GitHub-release pickers, else the standard install.</summary>
+    private Task DispatchInstall(CatalogItem m) => m.Id switch
+    {
+        "mingw" => InstallMinGwAsync(m),
+        "mingw-builds" => InstallMingwBuildsAsync(m),
+        "ntpwedit" or "openspeedy" or "creaminstaller" => InstallFromGitHubReleaseAsync(m),
+        _ => RunOpAsync(m, "install"),
+    };
+
+    /// <summary>Right-click「快速安装到默认路径」: install into 设置页「工具目录」(${ToolsDir}) + 软件名，
+    /// unless a path is already set for this item.</summary>
+    private async Task QuickInstallAsync(CatalogItem m)
+    {
+        if (string.IsNullOrEmpty(m.InstallPathOverride))
+        {
+            try
+            {
+                var baseDir = _resolver.Resolve("${ToolsDir}");
+                if (!string.IsNullOrWhiteSpace(baseDir) && !baseDir.Contains("${"))
+                    m.InstallPathOverride = InstallCenterViewModel.ComposeInstallPath(baseDir, m.Name);
+            }
+            catch { /* fall back to the method's default location */ }
+        }
+        await DispatchInstall(m);
+    }
+
+    private async Task ConfirmUninstallAndRun(CatalogItem item)
+    {
+        var choice = MessageBox.Show(
+            $"卸载 {item.Name}？\n\n【是】彻底删除（含用户数据）\n【否】仅卸载，保留数据\n【取消】不操作",
+            "卸载", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
+        if (choice == MessageBoxResult.Cancel) return;
+        await RunOpAsync(item, "uninstall", purge: choice == MessageBoxResult.Yes);
+    }
+
+    private void OpenInstallDir(CatalogItem item)
+    {
+        string? dir = null;
+        try
+        {
+            var exe = Launcher.ResolveExePath(item, _resolver);
+            if (exe != null) dir = Path.GetDirectoryName(exe);
+            if (string.IsNullOrEmpty(dir) && ProcessControl.ResolveTarget(item, _resolver) is { } t) dir = t.Dir;
+        }
+        catch { /* ignore */ }
+        if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+        {
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(dir) { UseShellExecute = true }); }
+            catch { /* ignore */ }
+        }
+        else MessageBox.Show($"未能定位 {item.Name} 的安装目录。", "打开软件目录", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    private static void OpenHomepage(CatalogItem item)
+    {
+        if (string.IsNullOrWhiteSpace(item.Homepage)) return;
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(item.Homepage) { UseShellExecute = true }); }
+        catch { /* ignore */ }
     }
 
     private async Task ConfirmRiskAndRun(CatalogItem item, string op)

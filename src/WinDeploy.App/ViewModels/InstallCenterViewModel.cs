@@ -29,6 +29,12 @@ public sealed class InstallCenterViewModel : ObservableObject
     public RelayCommand OpenDetailCommand { get; }
     public RelayCommand LaunchCommand { get; }
     public RelayCommand StopCommand { get; }
+    public RelayCommand InstallCardCommand { get; }
+    public RelayCommand UninstallCardCommand { get; }
+    public RelayCommand RestartCardCommand { get; }
+    public RelayCommand UpdateCardCommand { get; }
+    public RelayCommand OpenDirCommand { get; }
+    public RelayCommand OpenHomepageCommand { get; }
     public RelayCommand SelectAllCommand { get; }
     public RelayCommand InvertCommand { get; }
     public RelayCommand RestoreCommand { get; }
@@ -54,6 +60,14 @@ public sealed class InstallCenterViewModel : ObservableObject
     /// <summary>Raised when the user clicks a card's ■ stop button.</summary>
     public event Action<AppItemViewModel>? StopRequested;
 
+    /// <summary>Right-click context-menu actions on a card.</summary>
+    public event Action<AppItemViewModel>? InstallCardRequested;
+    public event Action<AppItemViewModel>? UninstallCardRequested;
+    public event Action<AppItemViewModel>? RestartCardRequested;
+    public event Action<AppItemViewModel>? UpdateCardRequested;
+    public event Action<AppItemViewModel>? OpenDirRequested;
+    public event Action<AppItemViewModel>? OpenHomepageRequested;
+
     public InstallCenterViewModel()
     {
         StartCommand = new RelayCommand(_ => StartRequested?.Invoke(), _ => SelectedCount > 0);
@@ -61,6 +75,12 @@ public sealed class InstallCenterViewModel : ObservableObject
         OpenDetailCommand = new RelayCommand(p => { if (p is AppItemViewModel vm) DetailRequested?.Invoke(vm); });
         LaunchCommand = new RelayCommand(p => { if (p is AppItemViewModel vm) LaunchRequested?.Invoke(vm); });
         StopCommand = new RelayCommand(p => { if (p is AppItemViewModel vm) StopRequested?.Invoke(vm); });
+        InstallCardCommand = new RelayCommand(p => { if (p is AppItemViewModel vm) InstallCardRequested?.Invoke(vm); });
+        UninstallCardCommand = new RelayCommand(p => { if (p is AppItemViewModel vm) UninstallCardRequested?.Invoke(vm); });
+        RestartCardCommand = new RelayCommand(p => { if (p is AppItemViewModel vm) RestartCardRequested?.Invoke(vm); });
+        UpdateCardCommand = new RelayCommand(p => { if (p is AppItemViewModel vm) UpdateCardRequested?.Invoke(vm); });
+        OpenDirCommand = new RelayCommand(p => { if (p is AppItemViewModel vm) OpenDirRequested?.Invoke(vm); });
+        OpenHomepageCommand = new RelayCommand(p => { if (p is AppItemViewModel vm) OpenHomepageRequested?.Invoke(vm); });
         SelectAllCommand = new RelayCommand(_ => SetAll(true));
         InvertCommand = new RelayCommand(_ => Invert());
         RestoreCommand = new RelayCommand(_ => Restore(), _ => _snapshot != null);
@@ -160,7 +180,7 @@ public sealed class InstallCenterViewModel : ObservableObject
 
     /// <summary>base + app folder. If the chosen path's leaf already (fuzzily) matches the app name, it's
     /// used as-is to avoid a duplicated segment (…\GPU-Z\GPU-Z).</summary>
-    private static string ComposeInstallPath(string baseDir, string appName)
+    public static string ComposeInstallPath(string baseDir, string appName)
     {
         var b = baseDir.TrimEnd('\\', '/');
         var leaf = Norm(System.IO.Path.GetFileName(b));

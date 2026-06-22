@@ -18,4 +18,4 @@
     <ProjectReference Include="..\WinDeploy.Core\WinDeploy.Core.csproj" />
   </ItemGroup>
 
-</Project>
+</Project

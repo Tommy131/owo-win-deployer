@@ -110,12 +110,60 @@
                   <DataTemplate>
                     <Border Style="{StaticResource Card}" Width="188" MinHeight="150" Margin="0,0,10,10" Padding="12"
                             Cursor="Hand"
+                            Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}">
                       <Border.InputBindings>
                         <MouseBinding MouseAction="LeftClick"
                                       Command="{Binding DataContext.OpenDetailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                       CommandParameter="{Binding}" />
                       </Border.InputBindings>
+                      <Border.ContextMenu>
+                        <ContextMenu Background="{DynamicResource CardBg}">
+                          <ContextMenu.Resources>
+                            <Style TargetType="MenuItem">
+                              <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+                              <Setter Property="Padding" Value="8,4" />
+                            </Style>
+                          </ContextMenu.Resources>
+                          <MenuItem Header="快速安装到默认路径"
+                                    Visibility="{Binding NotInstalled, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding PlacementTarget.Tag.InstallCardCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                    CommandParameter="{Binding}" />
+                          <MenuItem Header="检查更新"
+                                    Visibility="{Binding CanUpdate, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding PlacementTarget.Tag.UpdateCardCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                    CommandParameter="{Binding}" />
+                          <MenuItem Header="启动"
+                                    Visibility="{Binding ShowLaunch, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding PlacementTarget.Tag.LaunchCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                    CommandParameter="{Binding}" />
+                          <MenuItem Header="停止"
+                                    Visibility="{Binding ShowStop, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding PlacementTarget.Tag.StopCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                    CommandParameter="{Binding}" />
+                          <MenuItem Header="重启"
+                                    Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding PlacementTarget.Tag.RestartCardCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                    CommandParameter="{Binding}" />
+                          <Separator />
+                          <MenuItem Header="打开软件目录"
+                                    Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding PlacementTarget.Tag.OpenDirCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                    CommandParameter="{Binding}" />
+                          <MenuItem Header="前往官网"
+                                    Visibility="{Binding HasHomepage, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding PlacementTarget.Tag.OpenHomepageCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                    CommandParameter="{Binding}" />
+                          <MenuItem Header="详情…"
+                                    Command="{Binding PlacementTarget.Tag.OpenDetailCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                    CommandParameter="{Binding}" />
+                          <Separator />
+                          <MenuItem Header="卸载"
+                                    Visibility="{Binding CanUninstall, Converter={StaticResource BoolToVis}}"
+                                    Command="{Binding PlacementTarget.Tag.UninstallCardCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                    CommandParameter="{Binding}" />
+                        </ContextMenu>
+                      </Border.ContextMenu>
                       <StackPanel>
                         <Grid>
                           <Grid Width="36" Height="36" HorizontalAlignment="Left">

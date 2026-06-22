@@ -125,12 +125,21 @@ public sealed class AppItemViewModel : ObservableObject
                 OnPropertyChanged(nameof(IsInstalled));
                 OnPropertyChanged(nameof(ShowLaunch));
                 OnPropertyChanged(nameof(ShowStop));
+                OnPropertyChanged(nameof(NotInstalled));
+                OnPropertyChanged(nameof(CanUpdate));
+                OnPropertyChanged(nameof(CanUninstall));
             }
         }
     }
 
     public bool IsInstalled => _installed == true;
     public string StatusText => _installed switch { null => "检测中…", true => "已装", _ => "未装" };
+
+    // Right-click context-menu gating.
+    public bool NotInstalled => _installed == false;
+    public bool CanUpdate => IsInstalled && WinDeploy.Core.Engine.Updater.CanUpdate(Model);
+    public bool CanUninstall => IsInstalled && Model.Install.Method is "winget" or "winget-bundle" or "portable" or "git";
+    public bool HasHomepage => !string.IsNullOrWhiteSpace(Model.Homepage);
 
     private bool _hasRunningProc;
     /// <summary>The software currently has running processes (live-updated while the list is visible).</summary>
