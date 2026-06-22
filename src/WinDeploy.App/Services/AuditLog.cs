@@ -35,8 +35,22 @@ public static class AuditLog
     private static void Write(string category, string msg)
     {
         var line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{category}] {msg}";
-        try { lock (Gate) File.AppendAllText(FilePath, line + Environment.NewLine, new UTF8Encoding(false)); }
-        catch { /* logging must never break the app */ }
+        // Append with a permissive share + retry: a transient lock (editor open on app.log, AV, indexer)
+        // would otherwise silently drop the entry.
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                lock (Gate)
+                    using (var fs = new FileStream(FilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                    using (var w = new StreamWriter(fs, new UTF8Encoding(false)))
+                        w.Write(line + Environment.NewLine);
+                break;
+            }
+            catch (IOException) when (attempt < 6) { System.Threading.Thread.Sleep(25); }
+            catch (UnauthorizedAccessException) when (attempt < 6) { System.Threading.Thread.Sleep(25); }
+            catch { break; /* logging must never break the app */ }
+        }
         try { Logged?.Invoke(line); } catch { /* ignore subscriber faults */ }
     }
 

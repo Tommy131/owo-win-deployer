@@ -327,15 +327,22 @@ public sealed class MainViewModel : ObservableObject
         _ => RunOpAsync(m, "install"),
     };
 
-    /// <summary>Right-click「快速安装到默认路径」: install into 设置页「工具目录」(${ToolsDir}) + 软件名，
-    /// unless a path is already set for this item.</summary>
+    /// <summary>Right-click「快速安装到默认路径」: install into a category-based root + 软件名 (tools → ${ToolsDir},
+    /// ai → %LOCALAPPDATA%/ai_workspace, others → installer default), unless a path is already set.</summary>
     private async Task QuickInstallAsync(CatalogItem m)
     {
         if (string.IsNullOrEmpty(m.InstallPathOverride))
         {
             try
             {
-                var baseDir = _resolver.Resolve("${ToolsDir}");
+                // 默认安装根目录按类别：实用工具 → ${ToolsDir}；AI 工具 → %LOCALAPPDATA%/ai_workspace；
+                // 其他 → 不指定（用安装包默认位置 Program Files，由安装包自动决定 x86/x64）。
+                string? baseDir = m.Category switch
+                {
+                    "tools" => _resolver.Resolve("${ToolsDir}"),
+                    "ai" => Environment.ExpandEnvironmentVariables(@"%LOCALAPPDATA%\ai_workspace"),
+                    _ => null,
+                };
                 if (!string.IsNullOrWhiteSpace(baseDir) && !baseDir.Contains("${"))
                     m.InstallPathOverride = InstallCenterViewModel.ComposeInstallPath(baseDir, m.Name);
             }

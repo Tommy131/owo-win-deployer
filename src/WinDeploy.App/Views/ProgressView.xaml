@@ -78,7 +78,7 @@
 
     <!-- Task list -->
     <Border Grid.Row="3" Style="{StaticResource Card}" Padding="14,4,14,4" Margin="0,12,0,0">
-      <ScrollViewer VerticalScrollBarVisibility="Auto">
+      <ScrollViewer x:Name="TaskScroller" VerticalScrollBarVisibility="Auto">
         <ItemsControl ItemsSource="{Binding Items}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
@@ -141,7 +141,7 @@
 
     <!-- Log -->
     <Border Grid.Row="4" Background="{DynamicResource PageBg}" CornerRadius="8" Padding="12" Margin="0,12,0,0" MaxHeight="120">
-      <ScrollViewer VerticalScrollBarVisibility="Auto">
+      <ScrollViewer x:Name="LogScroller" VerticalScrollBarVisibility="Auto">
         <TextBlock Text="{Binding Log}" FontFamily="Consolas" FontSize="12"
                    Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" />
       </ScrollViewer>

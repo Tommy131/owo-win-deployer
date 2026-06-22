@@ -95,7 +95,25 @@ public static class RunHistory
 
     public static void Clear()
     {
-        try { lock (Gate) File.WriteAllText(FilePath, ""); } catch { /* ignore */ }
+        lock (Gate)
+        {
+            for (var attempt = 0; ; attempt++)
+            {
+                try
+                {
+                    if (File.Exists(FilePath)) File.Delete(FilePath);   // 彻底删除旧记录
+                    return;
+                }
+                catch (IOException) when (attempt < 6) { Thread.Sleep(30); }            // 被占用，稍后重试
+                catch (UnauthorizedAccessException) when (attempt < 6) { Thread.Sleep(30); }
+                catch
+                {
+                    // 删除仍失败（被外部查看器独占等）→ 退而求其次，清空内容到 0 字节
+                    try { using (new FileStream(FilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)) { } } catch { }
+                    return;
+                }
+            }
+        }
     }
 
     public static void Open()
