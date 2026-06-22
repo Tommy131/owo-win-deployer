@@ -19,11 +19,18 @@ public static class Arch
     /// <summary>MinGW / winlibs arch token for the given bitness (x86_64 / i686).</summary>
     public static string MingwToken(bool x64) => x64 ? "x86_64" : "i686";
 
-    /// <summary>True if a release asset can run on the current OS arch, or carries no arch marker
-    /// (arch-neutral). Used to drop irrelevant downloads from the GitHub release picker.</summary>
+    /// <summary>True if a release asset is usable on this Windows machine: not a non-Windows OS build, and
+    /// either matching the current CPU arch or arch-neutral. Drops irrelevant downloads from the picker.</summary>
     public static bool AssetUsable(string assetName)
     {
         var n = assetName.ToLowerInvariant();
+
+        // Drop non-Windows OS builds (this is a Windows deployer).
+        if (Has(n, "macos", "darwin", ".dmg", ".pkg", "osx", "-mac.", "_mac.", "-mac-",
+                   "linux", ".deb", ".rpm", ".appimage", ".tar.gz", ".tar.xz", ".tar.bz2",
+                   "android", ".apk", "ios", ".ipa"))
+            return false;
+
         var arm = Has(n, "arm64", "aarch64");
         var x64 = Has(n, "x64", "amd64", "win64", "x86_64", "x86-64", "win-x64");
         var x86 = !x64 && Has(n, "x86", "win32", "ia32", "i686", "win-x86");

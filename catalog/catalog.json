@@ -297,13 +297,11 @@
       "install": { "method": "winget", "id": "CrystalDewWorld.CrystalDiskInfo" },
       "detect": { "arp": "CrystalDiskInfo" } },
 
-    { "id": "cc-switch", "name": "CC Switch", "summary": "AI 服务本地代理网关 / API 渠道切换（便携）", "icon": "assets/icons/cc-switch.svg",
+    { "id": "cc-switch", "name": "CC Switch", "summary": "AI 服务本地代理网关 / API 渠道切换（选择 GitHub 发布版下载）", "icon": "assets/icons/cc-switch.svg",
       "category": "tools", "default": false,
       "homepage": "https://github.com/farion1231/cc-switch",
-      "install": { "method": "portable",
-        "url": "https://github.com/farion1231/cc-switch/releases/download/v3.16.3/CC-Switch-v3.16.3-Windows-Portable.zip",
-        "sha256": "…", "extractTo": "${ToolsDir}/cc-switch", "path": ["${ToolsDir}/cc-switch"] },
-      "detect": { "path": "${ToolsDir}/cc-switch" } },
+      "install": { "method": "github-release" },
+      "detect": { "path": "${ToolsDir}/cc-switch", "arp": "CC Switch" } },
 
     { "id": "7zip", "name": "7-Zip", "summary": "压缩 / 解压工具", "icon": "assets/icons/7zip.svg",
       "category": "tools", "default": false,

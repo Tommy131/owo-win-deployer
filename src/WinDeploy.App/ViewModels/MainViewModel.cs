@@ -21,6 +21,9 @@ public sealed class MainViewModel : ObservableObject
     private readonly SemaphoreSlim _opGate = new(1, 1);   // serialize operations so a new task queues, not replaces
     private DispatcherTimer? _installWatch;
     private readonly Dictionary<int, string?> _installPathCache = new();
+    // Ids whose catalog method is github-release (captured at load, before the picker mutates the method)
+    // so install always routes through the cached release-list picker.
+    private readonly HashSet<string> _githubReleaseIds = new(StringComparer.OrdinalIgnoreCase);
 
     public ObservableCollection<NavItemViewModel> NavItems { get; } = new();
     public InstallCenterViewModel Install { get; } = new();
@@ -196,6 +199,9 @@ public sealed class MainViewModel : ObservableObject
                     item.InstallPathOverride = p;
         }
 
+        foreach (var i in _catalog.Items)
+            if (i.Install.Method == "github-release") _githubReleaseIds.Add(i.Id);
+
         IconResolver.Init(_catalog, _repoRoot);
         Install.Initialize(_catalog, dir);
         ConfigSync.Initialize(_catalog, _resolver, _repoRoot);
@@ -324,7 +330,7 @@ public sealed class MainViewModel : ObservableObject
     {
         "mingw" => InstallMinGwAsync(m),
         "mingw-builds" => InstallMingwBuildsAsync(m),
-        "ntpwedit" or "openspeedy" or "creaminstaller" => InstallFromGitHubReleaseAsync(m),
+        _ when _githubReleaseIds.Contains(m.Id) => InstallFromGitHubReleaseAsync(m),
         _ => RunOpAsync(m, "install"),
     };
 
