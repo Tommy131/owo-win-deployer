@@ -13,6 +13,10 @@ public sealed class AppSettings
     public string? RedactKeywords { get; set; }
     public string? Theme { get; set; }   // system | light | dark
 
+    /// <summary>开发人员模式：开启后软件安装中心显示全部分类；关闭时普通用户仅见
+    /// 办公/通讯、游戏平台、系统依赖、媒体四类。默认关闭。</summary>
+    public bool DeveloperMode { get; set; }
+
     /// <summary>Custom install locations chosen per item (id → path), so a portable/git/winget app
     /// installed outside its default location is still found after a restart.</summary>
     public Dictionary<string, string> InstallPaths { get; set; } = new();

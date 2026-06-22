@@ -29,6 +29,16 @@
 
         <Border Style="{StaticResource Card}" Padding="16" Margin="0,12,0,0">
           <StackPanel>
+            <TextBlock Text="开发者选项" FontSize="14" FontWeight="SemiBold" />
+            <CheckBox Content="开发人员模式（显示完整软件列表）" IsChecked="{Binding DeveloperMode}"
+                      FontSize="13" Margin="0,10,0,0" />
+            <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,6,0,0"
+                       Text="关闭时仅显示「办公 / 通讯、游戏平台、系统依赖、媒体」四类常用软件；开启后额外显示开发工具链、IDE / 编辑器、AI 工具、数据库 / API、虚拟化、实用工具等全部分类。即时生效。" />
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}" Padding="16" Margin="0,12,0,0">
+          <StackPanel>
             <TextBlock Text="路径变量" FontSize="14" FontWeight="SemiBold" />
             <TextBlock Text="便携工具的安装根目录，支持 %ENV% 变量。改后下次启动生效。" FontSize="12"
                        Foreground="{DynamicResource TextSecondary}" Margin="0,2,0,10" />

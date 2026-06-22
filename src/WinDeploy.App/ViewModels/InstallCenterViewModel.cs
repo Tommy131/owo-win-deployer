@@ -19,6 +19,24 @@ public sealed class InstallCenterViewModel : ObservableObject
         ["tools"] = "实用工具",
     };
 
+    /// <summary>普通用户（非开发人员模式）可见的分类。其余分类（dev/ide/ai/db-api/vm/tools）
+    /// 仅在开发人员模式下显示，且永不被全选/方案勾选，以免被悄悄安装。</summary>
+    private static readonly HashSet<string> BasicCategories =
+        new(StringComparer.OrdinalIgnoreCase) { "office", "games", "system", "media" };
+
+    private bool _developerMode = SettingsStore.Load().DeveloperMode;
+
+    private bool CategoryVisible(string key) => _developerMode || BasicCategories.Contains(key);
+
+    /// <summary>设置页切换开发人员模式时调用：重算分类可见性，并取消隐藏分类的勾选。</summary>
+    public void SetDeveloperMode(bool on)
+    {
+        if (_developerMode == on) return;
+        _developerMode = on;
+        ApplyFilter();
+        CommandManager.InvalidateRequerySuggested();
+    }
+
     private Catalog? _catalog;
     private string _catalogDir = "";
 
@@ -152,7 +170,7 @@ public sealed class InstallCenterViewModel : ObservableObject
             foreach (var f in Directory.GetFiles(pdir, "*.json"))
                 Profiles.Add(Path.GetFileNameWithoutExtension(f));
 
-        RefreshCounts();
+        ApplyFilter();   // 按开发人员模式隐藏开发类分组（RefreshCounts 在内部已调用）
     }
 
     public int SelectedCount => Groups.Sum(g => g.Items.Count(i => i.IsSelected));
@@ -247,7 +265,12 @@ public sealed class InstallCenterViewModel : ObservableObject
     private void SetAll(bool value)
     {
         Snapshot();
-        foreach (var g in Groups) { foreach (var i in g.Items) i.IsSelected = value; g.RaiseCount(); }
+        foreach (var g in Groups)
+        {
+            var catVisible = CategoryVisible(g.Key);
+            foreach (var i in g.Items) i.IsSelected = value && catVisible;
+            g.RaiseCount();
+        }
         RefreshCounts();
         CommandManager.InvalidateRequerySuggested();
     }
@@ -255,7 +278,12 @@ public sealed class InstallCenterViewModel : ObservableObject
     private void Invert()
     {
         Snapshot();
-        foreach (var g in Groups) { foreach (var i in g.Items) i.IsSelected = !i.IsSelected; g.RaiseCount(); }
+        foreach (var g in Groups)
+        {
+            var catVisible = CategoryVisible(g.Key);
+            foreach (var i in g.Items) i.IsSelected = catVisible && !i.IsSelected;
+            g.RaiseCount();
+        }
         RefreshCounts();
         CommandManager.InvalidateRequerySuggested();
     }
@@ -277,17 +305,20 @@ public sealed class InstallCenterViewModel : ObservableObject
         var q = _searchText.Trim();
         foreach (var g in Groups)
         {
+            var catVisible = CategoryVisible(g.Key);
             var any = false;
             foreach (var i in g.Items)
             {
+                if (!catVisible) i.IsSelected = false;   // 隐藏分类永不参与安装
                 i.IsVisible = q.Length == 0
                     || i.Name.Contains(q, StringComparison.OrdinalIgnoreCase)
                     || i.Id.Contains(q, StringComparison.OrdinalIgnoreCase)
                     || i.Summary.Contains(q, StringComparison.OrdinalIgnoreCase);
                 any |= i.IsVisible;
             }
-            g.IsVisible = any;
+            g.IsVisible = catVisible && any;
         }
+        RefreshCounts();
     }
 
     private void ApplyProfile(string name)
@@ -302,7 +333,8 @@ public sealed class InstallCenterViewModel : ObservableObject
                 .Select(i => i.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
             foreach (var g in Groups)
             {
-                foreach (var i in g.Items) i.IsSelected = ids.Contains(i.Id);
+                var catVisible = CategoryVisible(g.Key);
+                foreach (var i in g.Items) i.IsSelected = catVisible && ids.Contains(i.Id);
                 g.RaiseCount();
             }
             RefreshCounts();

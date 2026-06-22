@@ -58,6 +58,7 @@ public sealed class MainViewModel : ObservableObject
         Processes.OperationRequested += (item, op) => _ = ConfirmRiskAndRun(item, op);
         Progress.CancelRequested += () => _cts?.Cancel();
         Settings.Saved += () => Secrets.ExtraKeywords = SettingsViewModel.ParseKeywords(Settings.RedactKeywords);
+        Settings.DeveloperModeChanged += on => Install.SetDeveloperMode(on);
         Load();
 
         NavItems.Add(new NavItemViewModel("", "软件安装中心", Install));

@@ -18,6 +18,7 @@ public sealed class SettingsViewModel : ObservableObject
         _mirror = _s.Mirror ?? "";
         _redactKeywords = _s.RedactKeywords ?? "";
         _theme = _s.Theme ?? "system";
+        _developerMode = _s.DeveloperMode;
         SettingsPath = SettingsStore.FilePath;
         SaveCommand = new RelayCommand(_ => Save());
         OpenFolderCommand = new RelayCommand(_ => OpenFolder());
@@ -77,6 +78,24 @@ public sealed class SettingsViewModel : ObservableObject
 
     private string _redactKeywords;
     public string RedactKeywords { get => _redactKeywords; set { if (Set(ref _redactKeywords, value)) Note = ""; } }
+
+    // ── 开发人员模式（即时生效并持久化）─────────────────────────────────
+    private bool _developerMode;
+    public bool DeveloperMode
+    {
+        get => _developerMode;
+        set
+        {
+            if (!Set(ref _developerMode, value)) return;
+            _s.DeveloperMode = value;
+            SettingsStore.Save(_s);
+            AuditLog.Action($"开发人员模式：{(value ? "开启（显示完整软件列表）" : "关闭（仅基础分类）")}");
+            DeveloperModeChanged?.Invoke(value);
+        }
+    }
+
+    /// <summary>勾选/取消开发人员模式时触发，让软件安装中心立即重算分类可见性。</summary>
+    public event Action<bool>? DeveloperModeChanged;
 
     private string _theme;
     public bool IsThemeSystem { get => _theme == "system"; set { if (value) SetTheme("system"); } }
