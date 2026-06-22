@@ -10,7 +10,7 @@
     <RootNamespace>WinDeploy.App</RootNamespace>
     <AssemblyName>WinDeploy</AssemblyName>
     <Product>OwO! Win Deployer</Product>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <AssemblyTitle>OwO! Win Deployer</AssemblyTitle>
     <Description>OwO! Win Deployer — 一键复刻 Windows 开发环境、应用与个人配置</Description>
     <Authors>Tommy131</Authors>
@@ -22,6 +22,10 @@
 
     <!-- 降低 Windows Defender 误报：不压缩单文件（压缩自解压会被启发式当作“打包壳/释放器”） -->
     <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
+
+    <!-- 只保留中性(英文)框架资源；去掉 cs/de/es/fr/it/ja/ko/pl/pt-BR/ru/tr/zh-Hans/zh-Hant
+         等十余个本地化卫星资源子目录（界面文案本身已硬编码中文），发行目录更整洁。 -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>

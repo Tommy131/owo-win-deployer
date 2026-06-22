@@ -24,24 +24,18 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Publish GUI (self-contained single file — for bootstrap direct download)
+      - name: Publish GUI (self-contained single file — used for both the ZIP and bootstrap direct download)
         run: >
           dotnet publish src/WinDeploy.App/WinDeploy.App.csproj
           -c Release -r win-x64 --self-contained true
           -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
-          --nologo -o dist/app
-
-      - name: Publish GUI (self-contained folder — for the ZIP, far fewer AV false positives)
-        run: >
-          dotnet publish src/WinDeploy.App/WinDeploy.App.csproj
-          -c Release -r win-x64 --self-contained true
-          --nologo -o dist/app-folder
+          -p:DebugType=none --nologo -o dist/app
 
       - name: Publish CLI (self-contained single file)
         run: >
           dotnet publish src/WinDeploy.Cli/WinDeploy.Cli.csproj
           -c Release -r win-x64 --self-contained true
-          -p:PublishSingleFile=true --nologo -o dist/cli
+          -p:PublishSingleFile=true -p:DebugType=none --nologo -o dist/cli
 
       - name: Code sign binaries (only runs if a signing certificate secret is configured)
         if: ${{ env.SIGN_PFX_BASE64 != '' }}
@@ -54,7 +48,7 @@ jobs:
           if (-not $signtool) { throw 'signtool.exe not found on runner' }
           & $signtool.FullName sign /f $pfx /p $env:SIGN_PFX_PASSWORD /fd SHA256 `
             /tr http://timestamp.digicert.com /td SHA256 `
-            dist/app/WinDeploy.exe dist/app-folder/WinDeploy.exe dist/cli/windeploy.exe
+            dist/app/WinDeploy.exe dist/cli/windeploy.exe
           Remove-Item $pfx -Force
 
       - name: Assemble release package
@@ -65,8 +59,8 @@ jobs:
           $name = "OwO-Win-Deployer-$tag-win-x64"
           $stage = "dist/$name"
           New-Item -ItemType Directory -Force -Path "$stage/assets" | Out-Null
-          # GUI 用文件夹版（exe + 运行库，非自解压单文件 → 显著降低杀软误报）
-          Copy-Item dist/app-folder/* "$stage" -Recurse -Force
+          # GUI 用单文件版（运行库已并入 exe，发行目录只有一个 exe + 数据目录，整洁）
+          Copy-Item dist/app/WinDeploy.exe "$stage/WinDeploy.exe" -Force
           # CLI 改名，避免 Windows 大小写不敏感与 WinDeploy.exe 同名冲突
           Copy-Item dist/cli/windeploy.exe "$stage/windeploy-cli.exe" -Force
           # 运行所需数据放在 exe 同级（程序向上查找 catalog/，再据此定位 repoRoot/assets）
@@ -75,7 +69,8 @@ jobs:
           Copy-Item configs      "$stage/configs"      -Recurse -Force
           Copy-Item LICENSE      "$stage/LICENSE"      -Force
           Copy-Item README.md    "$stage/README.md"    -Force
-          Compress-Archive -Path "$stage/*" -DestinationPath "dist/$name.zip" -Force
+          # 打包整个目录（含顶层文件夹），解压后得到一个干净的子目录而非一地散文件
+          Compress-Archive -Path "$stage" -DestinationPath "dist/$name.zip" -Force
           "zip=dist/$name.zip" >> $env:GITHUB_OUTPUT
 
       - name: Upload build artifact
@@ -99,8 +94,8 @@ jobs:
             一键在任意 Windows 设备上复刻开发环境、应用与个人配置。
 
             **下载（推荐用 ZIP）**
-            - `OwO-Win-Deployer-${{ github.ref_name }}-win-x64.zip` —— **推荐**。完整发行包，解压后运行 `WinDeploy.exe`（文件夹版，自包含免装 .NET，杀软误报最少）。
-            - `WinDeploy.exe` —— 单文件版，供裸机引导 `bootstrap.ps1` 直链下载；未签名时可能被 SmartScreen/Defender 拦截。
+            - `OwO-Win-Deployer-${{ github.ref_name }}-win-x64.zip` —— **推荐**。完整发行包，解压得到一个干净目录：单文件 `WinDeploy.exe`（自包含免装 .NET）+ `windeploy-cli.exe` + `catalog/ configs/ assets/`。
+            - `WinDeploy.exe` —— 仅 GUI 单文件，供裸机引导 `bootstrap.ps1` 直链下载；未签名时可能被 SmartScreen/Defender 提示「未知发布者」。
 
             > ⚠️ 程序未做代码签名时，Windows 可能提示「未知发布者」或被 Defender 拦截 —— 这属于无签名安装类软件的正常现象，可点「更多信息 → 仍要运行」，或参见 README 的「被拦截怎么办」。彻底解决需 Authenticode 代码签名（仓库已内置签名流水线，配置证书后自动生效）。
             >
