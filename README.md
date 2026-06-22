@@ -82,6 +82,15 @@ docs/DESIGN.md  设计文档
 >
 > 联网 `apply` 前请补实 `catalog.json` 中 `mingw` 的占位 URL 及几个待核 winget ID。
 
+## 被 Windows 拦截 / 提示「未知发布者」怎么办
+
+本程序目前**未做代码签名**，且属于「自动装软件」类工具，Windows SmartScreen / Defender 有可能拦截或提示「未知发布者」。这是无签名安装类软件的常见现象，**并非病毒**（源码与构建流水线全部公开）。处理方式：
+
+1. **SmartScreen 蓝色弹窗**：点「更多信息 → 仍要运行」。
+2. **优先下载 ZIP 版**：ZIP 内是文件夹版 GUI（exe + 运行库），比单文件自解压 exe 触发杀软启发式的概率低很多；解压后运行其中的 `WinDeploy.exe`。
+3. **被 Defender 删除 / 隔离**：到「Windows 安全中心 → 病毒和威胁防护 → 保护历史记录」恢复文件；并可在 <https://www.microsoft.com/wdsi/filesubmission> 提交误报。
+4. **彻底解决（开发者）**：使用 Authenticode 代码签名证书（EV 证书可即时获得 SmartScreen 信誉）。发布工作流已内置签名步骤——在仓库 *Settings → Secrets and variables → Actions* 配置 `SIGN_PFX_BASE64`（证书 base64）与 `SIGN_PFX_PASSWORD` 后，每次发布会自动签名。
+
 ## 许可证 License
 
 本项目对外采用 **CC BY-NC-SA 4.0**（署名 - 非商业性使用 - 相同方式共享 4.0 国际）许可，完整条款见 [`LICENSE`](LICENSE)：

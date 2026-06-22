@@ -44,6 +44,27 @@ public static class Arch
         };
     }
 
+    /// <summary>Preference rank for the current machine (lower = better): 0 = matches current arch,
+    /// 1 = arch-neutral, 2 = runnable but not native (e.g. x86 on x64), 3 = incompatible (e.g. arm64 on x64).
+    /// Used to both default the download picker and choose the right .exe among per-arch builds.</summary>
+    public static int PreferScore(string name)
+    {
+        var n = name.ToLowerInvariant();
+        var arm = Has(n, "arm64", "aarch64");
+        var x64 = Has(n, "x64", "amd64", "win64", "x86_64", "x86-64", "win-x64");
+        var x86 = !x64 && Has(n, "x86", "win32", "ia32", "i686", "win-x86");
+        var matchesCurrent = Current switch
+        {
+            CpuArch.X64 => x64,
+            CpuArch.Arm64 => arm,
+            CpuArch.X86 => x86,
+            _ => false,
+        };
+        if (matchesCurrent) return 0;
+        if (!(arm || x64 || x86)) return 1;     // no arch marker → neutral
+        return AssetUsable(name) ? 2 : 3;
+    }
+
     private static bool Has(string s, params string[] tokens)
     {
         foreach (var t in tokens) if (s.Contains(t)) return true;

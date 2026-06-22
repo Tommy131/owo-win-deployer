@@ -24,12 +24,18 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Publish GUI (self-contained single file)
+      - name: Publish GUI (self-contained single file — for bootstrap direct download)
         run: >
           dotnet publish src/WinDeploy.App/WinDeploy.App.csproj
           -c Release -r win-x64 --self-contained true
           -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
           --nologo -o dist/app
+
+      - name: Publish GUI (self-contained folder — for the ZIP, far fewer AV false positives)
+        run: >
+          dotnet publish src/WinDeploy.App/WinDeploy.App.csproj
+          -c Release -r win-x64 --self-contained true
+          --nologo -o dist/app-folder
 
       - name: Publish CLI (self-contained single file)
         run: >
@@ -47,7 +53,8 @@ jobs:
                       Where-Object { $_.FullName -like '*x64*' } | Sort-Object FullName | Select-Object -Last 1
           if (-not $signtool) { throw 'signtool.exe not found on runner' }
           & $signtool.FullName sign /f $pfx /p $env:SIGN_PFX_PASSWORD /fd SHA256 `
-            /tr http://timestamp.digicert.com /td SHA256 dist/app/WinDeploy.exe dist/cli/windeploy.exe
+            /tr http://timestamp.digicert.com /td SHA256 `
+            dist/app/WinDeploy.exe dist/app-folder/WinDeploy.exe dist/cli/windeploy.exe
           Remove-Item $pfx -Force
 
       - name: Assemble release package
@@ -58,8 +65,9 @@ jobs:
           $name = "OwO-Win-Deployer-$tag-win-x64"
           $stage = "dist/$name"
           New-Item -ItemType Directory -Force -Path "$stage/assets" | Out-Null
-          # GUI + CLI（CLI 改名，避免 Windows 大小写不敏感与 WinDeploy.exe 同名冲突）
-          Copy-Item dist/app/WinDeploy.exe "$stage/WinDeploy.exe"      -Force
+          # GUI 用文件夹版（exe + 运行库，非自解压单文件 → 显著降低杀软误报）
+          Copy-Item dist/app-folder/* "$stage" -Recurse -Force
+          # CLI 改名，避免 Windows 大小写不敏感与 WinDeploy.exe 同名冲突
           Copy-Item dist/cli/windeploy.exe "$stage/windeploy-cli.exe" -Force
           # 运行所需数据放在 exe 同级（程序向上查找 catalog/，再据此定位 repoRoot/assets）
           Copy-Item catalog      "$stage/catalog"      -Recurse -Force
@@ -90,9 +98,10 @@ jobs:
 
             一键在任意 Windows 设备上复刻开发环境、应用与个人配置。
 
-            **下载**
-            - `OwO-Win-Deployer-${{ github.ref_name }}-win-x64.zip` —— 完整发行包，解压即用（含软件清单 catalog、图标缓存与配置模板）。
-            - `WinDeploy.exe` —— 单文件 GUI，裸机引导 `bootstrap.ps1` 直链下载使用。
+            **下载（推荐用 ZIP）**
+            - `OwO-Win-Deployer-${{ github.ref_name }}-win-x64.zip` —— **推荐**。完整发行包，解压后运行 `WinDeploy.exe`（文件夹版，自包含免装 .NET，杀软误报最少）。
+            - `WinDeploy.exe` —— 单文件版，供裸机引导 `bootstrap.ps1` 直链下载；未签名时可能被 SmartScreen/Defender 拦截。
 
-            > 自包含单文件，目标机免装 .NET 运行时。
+            > ⚠️ 程序未做代码签名时，Windows 可能提示「未知发布者」或被 Defender 拦截 —— 这属于无签名安装类软件的正常现象，可点「更多信息 → 仍要运行」，或参见 README 的「被拦截怎么办」。彻底解决需 Authenticode 代码签名（仓库已内置签名流水线，配置证书后自动生效）。
+            >
             > 许可证：CC BY-NC-SA 4.0（署名 / 非商业 / 相同方式共享；作者保留商业权利）。

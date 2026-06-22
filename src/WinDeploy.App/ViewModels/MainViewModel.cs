@@ -477,8 +477,10 @@ public sealed class MainViewModel : ObservableObject
         }
 
         // 按系统平台过滤掉用不上的发行版（如 x64 机器上的 arm64）；过滤后为空则全部列出。
+        // 再按当前 CPU 架构排序：匹配当前架构的排最前，作为默认选中项。
         var assets = rel.Assets.Where(a => WinDeploy.Core.Util.Arch.AssetUsable(a.Name)).ToList();
-        if (assets.Count == 0) assets = rel.Assets;
+        if (assets.Count == 0) assets = rel.Assets.ToList();
+        assets = assets.OrderBy(a => WinDeploy.Core.Util.Arch.PreferScore(a.Name)).ToList();
 
         var assetLabels = assets.Select(a => $"{a.Name}   （{Mb(a.Size)}）").ToList();
         var dlgAsset = new Views.ChoiceDialog($"选择文件 · {rel.Tag}",

@@ -409,7 +409,7 @@
       "detect": { "arp": "PowerToys" } },
 
     { "id": "watt-toolkit", "name": "Watt Toolkit", "summary": "Steam++ 游戏 / 网络加速（选择 GitHub 发布版，按平台过滤）", "icon": "assets/icons/watt-toolkit.svg",
-      "category": "tools", "default": false,
+      "category": "games", "default": false,
       "homepage": "https://steampp.net/",
       "install": { "method": "github-release", "repo": "https://github.com/BeyondDimension/SteamTools" },
       "detect": { "path": "${ToolsDir}/watt-toolkit", "arp": "Watt Toolkit" } },

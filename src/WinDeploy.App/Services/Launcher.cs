@@ -256,6 +256,12 @@ public static class Launcher
                 .ToList();
             if (candidates.Count == 0) return null;
 
+            // Drop CPU-arch-incompatible builds (e.g. Dism++ARM64.exe on an x64 PC) and put the build that
+            // matches the current arch first, so name-prefix matching below doesn't grab the wrong exe.
+            var compatible = candidates.Where(f => Arch.AssetUsable(Path.GetFileName(f))).ToList();
+            if (compatible.Count > 0) candidates = compatible;
+            candidates = candidates.OrderBy(f => Arch.PreferScore(Path.GetFileName(f))).ToList();
+
             string N(string f) => Path.GetFileNameWithoutExtension(f).ToLowerInvariant();
 
             // 0) explicit launch-exe hint from the catalog (e.g. FurMark → FurMark_GUI.exe)
@@ -275,10 +281,10 @@ public static class Launcher
             // 3) substring
             var named = candidates.FirstOrDefault(f => tokens.Any(t => N(f).Contains(t) || t.Contains(N(f))));
             if (named != null) return named;
-            // 4) largest exe in the top dir
-            return SafeExes(dir)
-                .Where(f => !SkipExe.Any(s => N(f).Contains(s)))
-                .OrderByDescending(f => { try { return new FileInfo(f).Length; } catch { return 0; } })
+            // 4) arch-preferred, then largest (candidates already arch-ordered)
+            return candidates
+                .OrderBy(f => Arch.PreferScore(Path.GetFileName(f)))
+                .ThenByDescending(f => { try { return new FileInfo(f).Length; } catch { return 0L; } })
                 .FirstOrDefault();
         }
         catch { return null; }
