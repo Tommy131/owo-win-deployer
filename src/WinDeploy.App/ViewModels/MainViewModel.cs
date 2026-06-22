@@ -85,7 +85,7 @@ public sealed class MainViewModel : ObservableObject
         Install.Initialize(_catalog, dir);
         ConfigSync.Initialize(_catalog, _resolver, _repoRoot);
         Export.Initialize(_catalog, _resolver, _repoRoot);
-        Processes.Initialize(_catalog, _resolver);
+        Processes.Initialize(_catalog, _resolver, _repoRoot);
         _ = DetectAllAsync();
     }
 
@@ -155,6 +155,7 @@ public sealed class MainViewModel : ObservableObject
         var vm = new DetailViewModel(item, _resolver, back: () => Current = Install);
         vm.InstallRequested += m => _ = RunOpAsync(m, "install");
         vm.UpdateRequested += m => _ = ConfirmUpdateAndRun(m);
+        vm.DowngradeRequested += m => _ = ConfirmDowngradeAndRun(m);
         vm.UninstallRequested += (m, purge) => _ = RunOpAsync(m, "uninstall", purge);
         vm.LaunchRequested += m => _ = RunOpAsync(m, "launch");
         vm.StopRequested += m => _ = ConfirmRiskAndRun(m, "stop");
@@ -178,6 +179,13 @@ public sealed class MainViewModel : ObservableObject
         await RunOpAsync(item, "update");
     }
 
+    private async Task ConfirmDowngradeAndRun(CatalogItem item)
+    {
+        if (MessageBox.Show($"确定将 {item.Name} 降级到 {item.Version}？\n\n降级可能导致配置不兼容。",
+                "降级", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        await RunOpAsync(item, "downgrade");
+    }
+
     private static string Zh(StepStatus s) => s switch
     {
         StepStatus.Ok => "成功", StepStatus.Failed => "失败", _ => "跳过",
@@ -185,7 +193,7 @@ public sealed class MainViewModel : ObservableObject
 
     private static string Verb(string op) => op switch
     {
-        "install" => "安装", "update" => "更新", "uninstall" => "卸载",
+        "install" => "安装", "update" => "更新", "uninstall" => "卸载", "downgrade" => "降级",
         "launch" => "启动", "stop" => "结束", "restart" => "重启", _ => "操作",
     };
 
@@ -210,7 +218,8 @@ public sealed class MainViewModel : ObservableObject
             {
                 "install" => await _engine.RunOneAsync(item, ctx),
                 "update" => await Updater.UpdateAsync(item, ctx),
-                "uninstall" => await Uninstaller.UninstallAsync(item, _resolver, purge, ct),
+                "downgrade" => await Updater.DowngradeAsync(item, ctx),
+                "uninstall" => await Uninstaller.UninstallAsync(item, _resolver, purge, ct, ctx.Report),
                 "launch" => await Task.Run(() => LaunchOp(item)),
                 "stop" => await Task.Run(() => StopOp(item)),
                 "restart" => await RestartOp(item),
@@ -231,7 +240,7 @@ public sealed class MainViewModel : ObservableObject
         Progress.OnDone(res);
         Progress.Complete();
 
-        if (op is "install" or "update" or "uninstall")
+        if (op is "install" or "update" or "uninstall" or "downgrade")
         {
             Detection.ResetCache();
             Arp.Refresh();
@@ -250,7 +259,14 @@ public sealed class MainViewModel : ObservableObject
         _cts?.Dispose();
         _cts = new CancellationTokenSource();
         ct = _cts.Token;
-        return new EngineContext { Path = _resolver, RepoRoot = _repoRoot, Ct = ct };
+        var disp = Application.Current.Dispatcher;
+        return new EngineContext
+        {
+            Path = _resolver,
+            RepoRoot = _repoRoot,
+            Ct = ct,
+            Report = msg => disp.Invoke(() => Progress.OnStep(msg)),
+        };
     }
 
     private void PromptLeftoverCleanup(CatalogItem item, List<string> candidates)

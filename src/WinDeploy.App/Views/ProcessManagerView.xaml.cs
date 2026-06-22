@@ -8,6 +8,7 @@ public partial class ProcessManagerView : UserControl
     public ProcessManagerView()
     {
         InitializeComponent();
-        Loaded += (_, _) => { if (DataContext is ProcessManagerViewModel vm) _ = vm.RefreshAsync(); };
+        Loaded += (_, _) => (DataContext as ProcessManagerViewModel)?.StartLive();
+        Unloaded += (_, _) => (DataContext as ProcessManagerViewModel)?.StopLive();
     }
 }

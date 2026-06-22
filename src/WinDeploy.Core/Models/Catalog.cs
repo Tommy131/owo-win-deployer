@@ -60,6 +60,9 @@ public sealed class InstallSpec
     public string? Branch { get; set; }
     public string? Dest { get; set; }
 
+    // exe (download an installer and run it); Args = optional silent flags
+    public string? Args { get; set; }
+
     // conda
     public string? EnvFile { get; set; }
     public string? EnvName { get; set; }

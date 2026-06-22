@@ -104,21 +104,25 @@
             <TextBlock Text="{Binding PathHint}" FontSize="11" Foreground="{DynamicResource TextTertiary}" Margin="0,3,0,0" TextWrapping="Wrap" />
           </StackPanel>
 
-          <!-- 运行：启动 / 结束进程 / 重启（一行） -->
+          <!-- 运行：启动（绿）/ 结束进程（红，仅运行时）/ 重启（蓝） -->
           <StackPanel Orientation="Horizontal" Margin="0,0,0,10" Visibility="{Binding CanLaunch, Converter={StaticResource BoolToVis}}">
-            <Button Content="▶ 启动" Style="{StaticResource MiniButton}" Command="{Binding LaunchCommand}" ToolTip="启动该软件" />
-            <Button Content="■ 结束进程" Style="{StaticResource MiniButton}" Command="{Binding StopCommand}" Margin="8,0,0,0" ToolTip="结束该软件的所有进程" />
-            <Button Content="↻ 重启" Style="{StaticResource MiniButton}" Command="{Binding RestartCommand}" Margin="8,0,0,0" ToolTip="结束后重新启动" />
+            <Button Content="▶ 启动" Style="{StaticResource OkButton}" Command="{Binding LaunchCommand}" ToolTip="启动该软件" />
+            <Button Content="■ 结束进程" Style="{StaticResource DangerButton}" Command="{Binding StopCommand}" Margin="8,0,0,0"
+                    Visibility="{Binding CanStop, Converter={StaticResource BoolToVis}}" ToolTip="结束该软件的所有进程" />
+            <Button Content="↻ 重启" Style="{StaticResource InfoButton}" Command="{Binding RestartCommand}" Margin="8,0,0,0" ToolTip="结束后重新启动" />
           </StackPanel>
 
-          <!-- 管理：安装 / 检查更新 / 卸载（一行） -->
+          <!-- 管理：安装 / 检查更新（蓝）/ 降级 / 卸载（红） · 随版本选择器联动 -->
           <StackPanel Orientation="Horizontal">
             <Button Content="安装" Style="{StaticResource PrimaryButton}" Command="{Binding InstallCommand}"
-                    Visibility="{Binding CanInstall, Converter={StaticResource BoolToVis}}" ToolTip="安装该软件" />
-            <Button Content="检查 / 更新" Style="{StaticResource MiniButton}" Command="{Binding UpdateCommand}"
-                    Visibility="{Binding CanUpdate, Converter={StaticResource BoolToVis}}"
+                    Visibility="{Binding ShowInstall, Converter={StaticResource BoolToVis}}" ToolTip="按所选版本安装该软件" />
+            <Button Content="检查 / 更新" Style="{StaticResource InfoButton}" Command="{Binding UpdateCommand}"
+                    Visibility="{Binding ShowUpdate, Converter={StaticResource BoolToVis}}"
                     ToolTip="winget upgrade / git pull / 便携包重拉，更新到最新版本" />
-            <Button Content="卸载…" Style="{StaticResource MiniButton}" Command="{Binding UninstallCommand}" Margin="8,0,0,0"
+            <Button Content="降级" Style="{StaticResource MiniButton}" Command="{Binding DowngradeCommand}" Margin="8,0,0,0"
+                    Visibility="{Binding ShowDowngrade, Converter={StaticResource BoolToVis}}"
+                    ToolTip="安装所选的较低版本（仅 winget）" />
+            <Button Content="卸载…" Style="{StaticResource DangerButton}" Command="{Binding UninstallCommand}" Margin="8,0,0,0"
                     Visibility="{Binding CanUninstall, Converter={StaticResource BoolToVis}}" ToolTip="卸载该软件" />
           </StackPanel>
         </StackPanel>

@@ -18,7 +18,7 @@ public sealed class LogViewModel : ObservableObject
     {
         RefreshCommand = new RelayCommand(_ => Refresh());
         OpenFolderCommand = new RelayCommand(_ => OpenFolder());
-        ClearCommand = new RelayCommand(_ => { AuditLog.Clear(); Refresh(); });
+        ClearCommand = new RelayCommand(_ => ClearWithConfirm());
         AuditLog.Logged += OnLogged;
         Refresh();
     }
@@ -27,6 +27,14 @@ public sealed class LogViewModel : ObservableObject
     public string Text { get => _text; private set => Set(ref _text, value); }
 
     private void Refresh() => Text = AuditLog.ReadTail();
+
+    private void ClearWithConfirm()
+    {
+        if (MessageBox.Show("确定清空全部审计日志？此操作不可恢复。", "清空日志",
+                MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        AuditLog.Clear();
+        Refresh();
+    }
 
     private void OnLogged(string line)
     {

@@ -10,12 +10,15 @@
 
     <StackPanel Grid.Row="0">
       <TextBlock Text="进程管理" FontSize="20" FontWeight="SemiBold" />
-      <TextBlock Text="仅针对软件中心列表内的软件：查看正在运行的进程，结束单个 / 全部进程或重启。" FontSize="13"
-                 Foreground="{DynamicResource TextSecondary}" Margin="0,3,0,0" />
+      <TextBlock Text="仅针对软件中心列表内的软件：实时（每 2 秒）显示各软件的进程、CPU 占用与内存，支持展开/折叠、结束单个/全部进程、重启。" FontSize="13"
+                 Foreground="{DynamicResource TextSecondary}" Margin="0,3,0,0" TextWrapping="Wrap" />
     </StackPanel>
 
     <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,12,0,0">
-      <Button Content="刷新" Style="{StaticResource MiniButton}" Command="{Binding RefreshCommand}" />
+      <Button Content="↻ 刷新" Style="{StaticResource MiniButton}" Command="{Binding RefreshCommand}"
+              ToolTip="重新解析并扫描进程" />
+      <Button Content="打开任务管理器" Style="{StaticResource MiniButton}" Command="{Binding OpenTaskManagerCommand}" Margin="8,0,0,0"
+              ToolTip="打开 Windows 任务管理器" />
       <TextBlock Text="{Binding Summary}" FontSize="12" Foreground="{DynamicResource TextTertiary}"
                  VerticalAlignment="Center" Margin="16,0,0,0" />
     </StackPanel>
@@ -24,46 +27,82 @@
       <ItemsControl ItemsSource="{Binding Groups}">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
-            <Border Style="{StaticResource Card}" Padding="14" Margin="0,0,0,10">
+            <Border Style="{StaticResource Card}" Padding="12" Margin="0,0,0,10">
               <StackPanel>
-                <Grid Margin="0,0,0,8">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding CountText}" FontSize="12" Foreground="{DynamicResource TextTertiary}"
-                               Margin="10,0,0,0" VerticalAlignment="Center" />
-                  </StackPanel>
+                <!-- group header -->
+                <Grid>
+                  <!-- 点击整个标题（图标 / 名称）展开 / 折叠 -->
+                  <Border Background="Transparent" Cursor="Hand" HorizontalAlignment="Left" ToolTip="点击展开 / 折叠子进程">
+                    <Border.InputBindings>
+                      <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleCommand}" />
+                    </Border.InputBindings>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding ExpandGlyph}" FontSize="10" Width="18" TextAlignment="Center"
+                                 Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" />
+                      <Grid Width="26" Height="26" Margin="2,0,0,0">
+                        <Border CornerRadius="6" Background="{DynamicResource PageBg}"
+                                Visibility="{Binding ShowLetter, Converter={StaticResource BoolToVis}}">
+                          <TextBlock Text="{Binding Badge}" FontSize="13" FontWeight="SemiBold"
+                                     Foreground="{DynamicResource TextSecondary}"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <Image Source="{Binding IconImage}" Stretch="Uniform" Margin="2"
+                               Visibility="{Binding HasIcon, Converter={StaticResource BoolToVis}}"
+                               RenderOptions.BitmapScalingMode="HighQuality" />
+                      </Grid>
+                      <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" Margin="8,0,0,0" />
+                      <TextBlock Text="{Binding CountText}" FontSize="12" Foreground="{DynamicResource TextTertiary}"
+                                 Margin="10,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Border>
                   <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="↻ 重启" Style="{StaticResource MiniButton}"
+                    <Button Content="↻ 重启" Style="{StaticResource InfoButton}"
                             Command="{Binding DataContext.RestartCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             CommandParameter="{Binding}" />
-                    <Button Content="■ 结束全部" Style="{StaticResource MiniButton}" Margin="8,0,0,0"
+                    <Button Content="■ 结束全部" Style="{StaticResource DangerButton}" Margin="8,0,0,0"
                             Command="{Binding DataContext.EndAllCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                             CommandParameter="{Binding}" />
                   </StackPanel>
                 </Grid>
 
-                <ItemsControl ItemsSource="{Binding Processes}">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <Grid Margin="0,3">
-                        <Grid.ColumnDefinitions>
-                          <ColumnDefinition Width="*" />
-                          <ColumnDefinition Width="92" />
-                          <ColumnDefinition Width="92" />
-                          <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{Binding Name}" FontFamily="Consolas" FontSize="12.5" VerticalAlignment="Center" />
-                        <TextBlock Grid.Column="1" Text="{Binding Pid, StringFormat=PID {0}}" FontSize="12"
-                                   Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" />
-                        <TextBlock Grid.Column="2" Text="{Binding MemText}" FontSize="12"
-                                   Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" />
-                        <Button Grid.Column="3" Content="结束" Style="{StaticResource MiniButton}"
-                                Command="{Binding DataContext.EndProcessCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                CommandParameter="{Binding}" />
-                      </Grid>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <!-- process rows (collapsible) -->
+                <StackPanel Margin="30,8,0,0" Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
+                  <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="86" />
+                      <ColumnDefinition Width="74" />
+                      <ColumnDefinition Width="92" />
+                      <ColumnDefinition Width="64" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="进程" FontSize="11" Foreground="{DynamicResource TextTertiary}" />
+                    <TextBlock Grid.Column="1" Text="PID" FontSize="11" Foreground="{DynamicResource TextTertiary}" />
+                    <TextBlock Grid.Column="2" Text="CPU" FontSize="11" Foreground="{DynamicResource TextTertiary}" />
+                    <TextBlock Grid.Column="3" Text="内存" FontSize="11" Foreground="{DynamicResource TextTertiary}" />
+                  </Grid>
+                  <ItemsControl ItemsSource="{Binding Processes}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="0,3">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="86" />
+                            <ColumnDefinition Width="74" />
+                            <ColumnDefinition Width="92" />
+                            <ColumnDefinition Width="64" />
+                          </Grid.ColumnDefinitions>
+                          <TextBlock Grid.Column="0" Text="{Binding Name}" FontFamily="Consolas" FontSize="12.5" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="1" Text="{Binding Pid}" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="2" Text="{Binding CpuText}" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="3" Text="{Binding MemText}" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" />
+                          <Button Grid.Column="4" Content="结束" Style="{StaticResource DangerButton}"
+                                  Command="{Binding DataContext.EndProcessCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                  CommandParameter="{Binding}" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
               </StackPanel>
             </Border>
           </DataTemplate>

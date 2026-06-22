@@ -10,7 +10,17 @@
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
-    <TextBlock Grid.Row="0" Text="运行进度" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,12" />
+    <Grid Grid.Row="0" Margin="0,0,0,12">
+      <TextBlock Text="运行进度" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" />
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+        <Button Content="总日志" Style="{StaticResource MiniButton}" Command="{Binding OpenTotalLogCommand}"
+                ToolTip="打开独立总日志文件 progress.jsonl（每个任务一条 JSON）" />
+        <Button Content="清空总日志" Style="{StaticResource DangerButton}" Command="{Binding ClearTotalLogCommand}" Margin="8,0,0,0"
+                ToolTip="清空 progress.jsonl（需确认）" />
+        <Button Content="清空历史" Style="{StaticResource MiniButton}" Command="{Binding ClearHistoryCommand}" Margin="8,0,0,0"
+                ToolTip="清空屏幕上的运行进度历史（需确认）" />
+      </StackPanel>
+    </Grid>
 
     <!-- Overall -->
     <Border Grid.Row="1" Style="{StaticResource Card}" Padding="16">
@@ -60,7 +70,7 @@
           <TextBlock Text="{Binding CurrentLabel}" FontSize="12" Foreground="{DynamicResource TextSecondary}" />
           <TextBlock Text="{Binding Current}" FontSize="15" FontWeight="SemiBold" Margin="0,2,0,0" />
         </StackPanel>
-        <Button Content="取消" Style="{StaticResource MiniButton}" Command="{Binding CancelCommand}"
+        <Button Content="取消" Style="{StaticResource DangerButton}" Command="{Binding CancelCommand}"
                 HorizontalAlignment="Right" VerticalAlignment="Center"
                 ToolTip="取消当前操作（安装会清理已下载/解压的残留）" />
       </Grid>
@@ -72,19 +82,42 @@
         <ItemsControl ItemsSource="{Binding Items}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border BorderBrush="{DynamicResource BorderSoft}" BorderThickness="0,0,0,1" Padding="2,9">
-                <Grid>
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{Binding Name}" FontSize="13" />
-                    <TextBlock Text="{Binding Method}" FontSize="11" Foreground="{DynamicResource TextTertiary}"
-                               Margin="8,0,0,0" VerticalAlignment="Center" />
+              <Border BorderBrush="{DynamicResource BorderSoft}" BorderThickness="0,0,0,1" Padding="2,9"
+                      Background="Transparent" Cursor="Hand" ToolTip="点击查看 / 收起该任务的详细步骤">
+                <Border.InputBindings>
+                  <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleDetailsCommand}" />
+                </Border.InputBindings>
+                <StackPanel>
+                  <Grid>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding Name}" FontSize="13" />
+                      <TextBlock Text="{Binding Method}" FontSize="11" Foreground="{DynamicResource TextTertiary}"
+                                 Margin="8,0,0,0" VerticalAlignment="Center" />
+                      <TextBlock Text="▾" FontSize="10" Foreground="{DynamicResource TextTertiary}" Margin="6,0,0,0" VerticalAlignment="Center"
+                                 Visibility="{Binding HasDetails, Converter={StaticResource BoolToVis}}" />
+                    </StackPanel>
+                    <Border x:Name="Pill" HorizontalAlignment="Right" CornerRadius="10" Padding="9,2"
+                            Background="{DynamicResource PageBg}">
+                      <TextBlock x:Name="PillText" Text="{Binding Status}" FontSize="11"
+                                 Foreground="{DynamicResource TextSecondary}" />
+                    </Border>
+                  </Grid>
+                  <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                    <TextBlock Text="{Binding TimeText}" FontSize="11" Foreground="{DynamicResource TextTertiary}" />
+                    <TextBlock Text="{Binding DurationText}" FontSize="11" Foreground="{DynamicResource TextTertiary}" Margin="12,0,0,0" />
                   </StackPanel>
-                  <Border x:Name="Pill" HorizontalAlignment="Right" CornerRadius="10" Padding="9,2"
-                          Background="{DynamicResource PageBg}">
-                    <TextBlock x:Name="PillText" Text="{Binding Status}" FontSize="11"
-                               Foreground="{DynamicResource TextSecondary}" />
+                  <Border Margin="0,6,0,0" Padding="10" CornerRadius="6" Background="{DynamicResource PageBg}"
+                          Visibility="{Binding IsDetailsOpen, Converter={StaticResource BoolToVis}}">
+                    <ItemsControl ItemsSource="{Binding Details}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="11.5"
+                                     Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,1" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                   </Border>
-                </Grid>
+                </StackPanel>
               </Border>
               <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding Kind}" Value="ok">

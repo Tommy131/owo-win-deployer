@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using WinDeploy.App.Services;
 using WinDeploy.Core;
 using WinDeploy.Core.Engine;
@@ -23,6 +24,7 @@ public sealed class DetailViewModel : ObservableObject
     public RelayCommand OpenLocationCommand { get; }
     public RelayCommand InstallCommand { get; }
     public RelayCommand UpdateCommand { get; }
+    public RelayCommand DowngradeCommand { get; }
     public RelayCommand UninstallCommand { get; }
     public RelayCommand LaunchCommand { get; }
     public RelayCommand StopCommand { get; }
@@ -30,6 +32,7 @@ public sealed class DetailViewModel : ObservableObject
 
     public event Action<CatalogItem>? InstallRequested;
     public event Action<CatalogItem>? UpdateRequested;
+    public event Action<CatalogItem>? DowngradeRequested;
     public event Action<CatalogItem, bool>? UninstallRequested;
     public event Action<CatalogItem>? LaunchRequested;
     public event Action<CatalogItem>? StopRequested;
@@ -42,8 +45,9 @@ public sealed class DetailViewModel : ObservableObject
         BackCommand = new RelayCommand(_ => back());
         OpenHomepageCommand = new RelayCommand(_ => OpenHomepage());
         OpenLocationCommand = new RelayCommand(_ => OpenLocation(), _ => HasInstallLocation);
-        InstallCommand = new RelayCommand(_ => InstallRequested?.Invoke(Item.Model), _ => CanInstall);
-        UpdateCommand = new RelayCommand(_ => UpdateRequested?.Invoke(Item.Model), _ => CanUpdate);
+        InstallCommand = new RelayCommand(_ => InstallRequested?.Invoke(Item.Model), _ => ShowInstall);
+        UpdateCommand = new RelayCommand(_ => UpdateRequested?.Invoke(Item.Model), _ => ShowUpdate);
+        DowngradeCommand = new RelayCommand(_ => DowngradeRequested?.Invoke(Item.Model), _ => ShowDowngrade);
         UninstallCommand = new RelayCommand(_ => RequestUninstall(), _ => CanUninstall);
         LaunchCommand = new RelayCommand(_ => LaunchRequested?.Invoke(Item.Model), _ => CanLaunch);
         StopCommand = new RelayCommand(_ => StopRequested?.Invoke(Item.Model), _ => CanStop);
@@ -56,6 +60,7 @@ public sealed class DetailViewModel : ObservableObject
             "winget-bundle" => "winget（合集）",
             "portable" => "便携包（zip）",
             "git" => "Git 仓库",
+            "exe" => "官方安装包",
             "conda" => "conda 环境",
             "vscode-ext" => "VS Code 扩展",
             "script" => "脚本",
@@ -84,6 +89,7 @@ public sealed class DetailViewModel : ObservableObject
         if (cached != null) Apply(cached);
         _ = LoadAsync();
         if (CanChooseVersion) _ = LoadVersionsAsync();
+        if (item.IsInstalled) _ = CheckRunningAsync();
     }
 
     private const string Latest = "最新";
@@ -100,12 +106,46 @@ public sealed class DetailViewModel : ObservableObject
     public bool IsInstalled => Item.IsInstalled;
     public string StatusText => Item.IsInstalled ? "已安装" : "未安装";
 
-    public bool CanInstall => !Item.IsInstalled;
-    public bool CanUpdate => Item.IsInstalled && Updater.CanUpdate(Item.Model);
+    // Version-selector ↔ button linkage:
+    //   未安装 → 安装；已安装且选「最新」或 ≥ 当前版本 → 检查/更新；已安装且选低于当前版本 → 降级。
+    public bool ShowInstall => !Item.IsInstalled;
+    public bool ShowDowngrade => Item.IsInstalled && CanChooseVersion && _selectedVersion != Latest
+                                 && _version != "—" && CompareVersions(_selectedVersion, _version) < 0;
+    public bool ShowUpdate => Item.IsInstalled && Updater.CanUpdate(Item.Model) && !ShowDowngrade;
     public bool CanUninstall => Item.IsInstalled && Item.Model.Install.Method is "winget" or "winget-bundle" or "portable" or "git";
     public bool CanLaunch => Item.IsInstalled;
-    public bool CanStop => Item.IsInstalled;
+    public bool CanStop => Item.IsInstalled && _isRunningProc;   // hide 结束进程 when not running
     public bool CanRestart => Item.IsInstalled;
+
+    private bool _isRunningProc;
+    public bool IsRunningProc
+    {
+        get => _isRunningProc;
+        private set { if (Set(ref _isRunningProc, value)) { OnPropertyChanged(nameof(CanStop)); CommandManager.InvalidateRequerySuggested(); } }
+    }
+
+    private async Task CheckRunningAsync()
+    {
+        try { var n = await Task.Run(() => ProcessControl.Find(Item.Model, _resolver).Count); IsRunningProc = n > 0; }
+        catch { IsRunningProc = false; }
+    }
+
+    private DispatcherTimer? _runWatch;
+
+    /// <summary>Begin polling running-state every 2 s so 「结束进程」 appears/disappears live.</summary>
+    public void StartRunningWatch()
+    {
+        if (!Item.IsInstalled) return;
+        _runWatch ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _runWatch.Tick -= OnRunWatch;
+        _runWatch.Tick += OnRunWatch;
+        _ = CheckRunningAsync();
+        _runWatch.Start();
+    }
+
+    public void StopRunningWatch() => _runWatch?.Stop();
+
+    private void OnRunWatch(object? sender, EventArgs e) => _ = CheckRunningAsync();
 
     public string Source { get; }
     public string PackageId { get; }
@@ -118,7 +158,39 @@ public sealed class DetailViewModel : ObservableObject
     public string SelectedVersion
     {
         get => _selectedVersion;
-        set { if (Set(ref _selectedVersion, value)) Item.Model.Version = value == Latest ? null : value; }
+        set
+        {
+            if (!Set(ref _selectedVersion, value)) return;
+            Item.Model.Version = value == Latest ? null : value;
+            RaiseButtons();
+        }
+    }
+
+    private void RaiseButtons()
+    {
+        OnPropertyChanged(nameof(ShowInstall));
+        OnPropertyChanged(nameof(ShowUpdate));
+        OnPropertyChanged(nameof(ShowDowngrade));
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    private static int CompareVersions(string a, string b)
+    {
+        var pa = a.Split('.');
+        var pb = b.Split('.');
+        for (var i = 0; i < Math.Max(pa.Length, pb.Length); i++)
+        {
+            var va = i < pa.Length ? NumPart(pa[i]) : 0;
+            var vb = i < pb.Length ? NumPart(pb[i]) : 0;
+            if (va != vb) return va.CompareTo(vb);
+        }
+        return 0;
+
+        static int NumPart(string s)
+        {
+            var digits = new string(s.TakeWhile(char.IsDigit).ToArray());
+            return int.TryParse(digits, out var n) ? n : 0;
+        }
     }
 
     public bool CanSetPath { get; }
@@ -150,7 +222,7 @@ public sealed class DetailViewModel : ObservableObject
     public string Version
     {
         get => _version;
-        private set { if (Set(ref _version, value)) OnPropertyChanged(nameof(InstalledNote)); }
+        private set { if (Set(ref _version, value)) { OnPropertyChanged(nameof(InstalledNote)); RaiseButtons(); } }
     }
     public string InstalledNote => IsInstalled && _version != "—" ? $"当前已装 {_version}" : "";
 

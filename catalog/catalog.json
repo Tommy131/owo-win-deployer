@@ -151,11 +151,11 @@
       "category": "ai", "default": false,
       "install": { "method": "winget", "id": "Codeium.Windsurf" } },
 
-    { "id": "hermes-agent", "name": "Hermes Agent", "summary": "Nous Research 自进化 AI 智能体（CLI / 多平台）", "icon": "assets/icons/hermes-agent.svg",
+    { "id": "hermes-agent", "name": "Hermes Agent", "summary": "Nous Research AI 智能体桌面端（官方安装包）", "icon": "assets/icons/hermes-agent.svg",
       "category": "ai", "default": false,
-      "homepage": "https://github.com/NousResearch/hermes-agent",
-      "install": { "method": "git", "repo": "https://github.com/NousResearch/hermes-agent.git", "dest": "${DevRoot}/hermes-agent" },
-      "detect": { "path": "${DevRoot}/hermes-agent/.git" } },
+      "homepage": "https://hermes-agent.nousresearch.com/",
+      "install": { "method": "exe", "url": "https://hermes-assets.nousresearch.com/Hermes-Setup.exe?build=d19aabbf2dc5" },
+      "detect": { "arp": "Hermes" } },
 
     // ── 办公 / 通讯 ─────────────────────────────
     { "id": "wechat", "name": "微信", "summary": "即时通讯", "icon": "assets/icons/wechat.svg",
@@ -222,6 +222,53 @@
 
     { "id": "epic", "name": "Epic Games", "summary": "游戏平台客户端（仅本体）", "icon": "assets/icons/epic.svg",
       "category": "games", "default": false,
-      "install": { "method": "winget", "id": "EpicGames.EpicGamesLauncher" } }
+      "install": { "method": "winget", "id": "EpicGames.EpicGamesLauncher" } },
+
+    // ── 实用工具（便携） ─────────────────────────────
+    { "id": "v2rayn", "name": "v2rayN", "summary": "代理 / 科学上网客户端（便携）", "icon": "assets/icons/v2rayn.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://github.com/2dust/v2rayN",
+      "install": { "method": "portable",
+        "url": "https://github.com/2dust/v2rayN/releases/latest/download/v2rayN-windows-64-SelfContained.zip",
+        "sha256": "…", "extractTo": "${ToolsDir}/v2rayN", "strip": 1, "path": ["${ToolsDir}/v2rayN"] },
+      "detect": { "path": "${ToolsDir}/v2rayN/v2rayN.exe" } },
+
+    { "id": "snipaste", "name": "Snipaste", "summary": "截图 / 贴图工具（便携）", "icon": "assets/icons/snipaste.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.snipaste.com",
+      "install": { "method": "portable",
+        "url": "https://dl.snipaste.com/win-x64",
+        "sha256": "…", "extractTo": "${ToolsDir}/snipaste", "strip": 1, "path": ["${ToolsDir}/snipaste"] },
+      "detect": { "path": "${ToolsDir}/snipaste/Snipaste.exe" } },
+
+    { "id": "screentogif", "name": "ScreenToGif", "summary": "录屏转 GIF（便携）", "icon": "assets/icons/screentogif.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.screentogif.com",
+      "install": { "method": "portable",
+        "url": "https://github.com/NickeManarin/ScreenToGif/releases/download/2.43.1/ScreenToGif.2.43.1.Portable.x64.zip",
+        "sha256": "…", "extractTo": "${ToolsDir}/screentogif", "path": ["${ToolsDir}/screentogif"] },
+      "detect": { "path": "${ToolsDir}/screentogif/ScreenToGif.exe" } },
+
+    { "id": "crystaldiskinfo", "name": "CrystalDiskInfo", "summary": "硬盘 S.M.A.R.T 健康监测（便携）", "icon": "assets/icons/crystaldiskinfo.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://crystalmark.info/en/software/crystaldiskinfo/",
+      "install": { "method": "portable",
+        "url": "https://crystalmark.info/redirect.php?product=CrystalDiskInfo",
+        "sha256": "…", "extractTo": "${ToolsDir}/crystaldiskinfo", "path": ["${ToolsDir}/crystaldiskinfo"] },
+      "detect": { "path": "${ToolsDir}/crystaldiskinfo/DiskInfo64.exe" } },
+
+    { "id": "cc-switch", "name": "CC Switch", "summary": "AI 服务本地代理网关 / API 渠道切换（便携）", "icon": "assets/icons/cc-switch.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://github.com/farion1231/cc-switch",
+      "install": { "method": "portable",
+        "url": "https://github.com/farion1231/cc-switch/releases/download/v3.16.3/CC-Switch-v3.16.3-Windows-Portable.zip",
+        "sha256": "…", "extractTo": "${ToolsDir}/cc-switch", "path": ["${ToolsDir}/cc-switch"] },
+      "detect": { "path": "${ToolsDir}/cc-switch" } },
+
+    { "id": "7zip", "name": "7-Zip", "summary": "压缩 / 解压工具", "icon": "assets/icons/7zip.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.7-zip.org",
+      "install": { "method": "winget", "id": "7zip.7zip" },
+      "detect": { "arp": "7-Zip" } }
   ]
 }

@@ -339,6 +339,23 @@
         </Setter>
       </Style>
 
+      <!-- Semantic colored buttons (启动=绿 / 结束=红 / 重启=蓝) -->
+      <Style x:Key="OkButton" TargetType="Button" BasedOn="{StaticResource MiniButton}">
+        <Setter Property="Foreground" Value="{DynamicResource OkFg}" />
+        <Setter Property="Background" Value="{DynamicResource OkBg}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource OkFg}" />
+      </Style>
+      <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource MiniButton}">
+        <Setter Property="Foreground" Value="{DynamicResource FailFg}" />
+        <Setter Property="Background" Value="{DynamicResource FailBg}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource FailFg}" />
+      </Style>
+      <Style x:Key="InfoButton" TargetType="Button" BasedOn="{StaticResource MiniButton}">
+        <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+        <Setter Property="Background" Value="{DynamicResource AccentBg}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+      </Style>
+
       <!-- Page → View map -->
       <DataTemplate DataType="{x:Type vm:InstallCenterViewModel}">
         <views:InstallCenterView />

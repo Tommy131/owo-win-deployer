@@ -21,6 +21,7 @@ public sealed class WingetInstaller : IInstaller
         if (ins.Scope != null) { args.Add("--scope"); args.Add(ins.Scope); }
         if (item.Version != null) { args.Add("--version"); args.Add(item.Version); }
         if (item.InstallPathOverride != null) { args.Add("--location"); args.Add(ctx.Path.Resolve(item.InstallPathOverride)); }
+        ctx.Step($"winget 安装 {ins.Id}{(item.Version != null ? " " + item.Version : "")} …");
         var r = await Proc.RunAsync("winget", args, ct: ctx.Ct);
         return r.Ok ? StepOutcome.Done() : StepOutcome.Fail($"winget exit {r.ExitCode}");
     }
@@ -61,6 +62,7 @@ public sealed class PortableInstaller : IInstaller
         var tmpZip = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"windeploy_{item.Id}.zip");
         var tmpEx = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"windeploy_{item.Id}_x");
 
+        ctx.Step($"开始下载 {ins.Url} …");
         using (var http = new HttpClient { Timeout = TimeSpan.FromMinutes(30) })
         await using (var src = await http.GetStreamAsync(ins.Url, ctx.Ct))
         await using (var f = File.Create(tmpZip))
@@ -68,12 +70,14 @@ public sealed class PortableInstaller : IInstaller
 
         if (ins.Sha256 is { Length: > 0 } sha && sha != "…")
         {
+            ctx.Step("校验 SHA256 …");
             var actual = Convert.ToHexString(SHA256.HashData(await File.ReadAllBytesAsync(tmpZip, ctx.Ct)));
             if (!actual.Equals(sha, StringComparison.OrdinalIgnoreCase))
                 return StepOutcome.Fail($"sha256 mismatch ({actual[..12]}…)");
         }
         else Log.Warn($"{item.Id}: no sha256 set — skipping integrity check");
 
+        ctx.Step("解压 …");
         if (Directory.Exists(tmpEx)) Directory.Delete(tmpEx, true);
         ZipFile.ExtractToDirectory(tmpZip, tmpEx);
 
@@ -86,6 +90,7 @@ public sealed class PortableInstaller : IInstaller
             else break;
         }
 
+        ctx.Step($"写入安装目录 {dest} …");
         Directory.CreateDirectory(dest);
         CopyDir(srcRoot, dest);
 
@@ -118,9 +123,13 @@ public sealed class GitInstaller : IInstaller
 
         ProcResult r;
         if (Directory.Exists(System.IO.Path.Combine(dest, ".git")))
+        {
+            ctx.Step($"git 拉取更新 {dest} …");
             r = await Proc.RunAsync("git", new[] { "-C", dest, "pull", "--ff-only" }, ct: ctx.Ct);
+        }
         else
         {
+            ctx.Step($"git 克隆 {ins.Repo} …");
             var a = new List<string> { "clone", "--depth", "1" };
             if (ins.Branch != null) { a.Add("--branch"); a.Add(ins.Branch); }
             a.Add(ins.Repo);
@@ -132,6 +141,33 @@ public sealed class GitInstaller : IInstaller
         foreach (var p in ins.Path ?? new List<string>())
             EnvPath.AddToUserPath(ctx.Path.Resolve(p));
         return StepOutcome.Done();
+    }
+}
+
+public sealed class ExeInstaller : IInstaller
+{
+    public string Method => "exe";
+
+    public async Task<StepOutcome> RunAsync(CatalogItem item, EngineContext ctx)
+    {
+        var ins = item.Install;
+        if (ins.Url is null) return StepOutcome.Fail("exe 需要 url");
+
+        var tmp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"windeploy_{item.Id}_setup.exe");
+        ctx.Step($"下载安装包 {ins.Url} …");
+        using (var http = new HttpClient { Timeout = TimeSpan.FromMinutes(30) })
+        await using (var src = await http.GetStreamAsync(ins.Url, ctx.Ct))
+        await using (var f = File.Create(tmp))
+            await src.CopyToAsync(f, ctx.Ct);
+
+        ctx.Step("运行安装程序 …");
+        var args = string.IsNullOrWhiteSpace(ins.Args)
+            ? Array.Empty<string>()
+            : ins.Args.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var r = await Proc.RunAsync(tmp, args, ct: ctx.Ct);
+
+        try { File.Delete(tmp); } catch { /* best effort */ }
+        return r.Ok ? StepOutcome.Done() : StepOutcome.Fail($"安装程序退出码 {r.ExitCode}");
     }
 }
 

@@ -16,6 +16,7 @@ public static class Updater
     public static async Task<StepOutcome> UpdateAsync(CatalogItem item, EngineContext ctx)
     {
         var ins = item.Install;
+        ctx.Step("检查可用更新 …");
         switch (ins.Method)
         {
             case "winget" when ins.Id != null:
@@ -59,6 +60,22 @@ public static class Updater
             default:
                 return StepOutcome.Fail("该类型暂不支持更新");
         }
+    }
+
+    /// <summary>Install a specific (older) version over the installed one — winget only.</summary>
+    public static async Task<StepOutcome> DowngradeAsync(CatalogItem item, EngineContext ctx)
+    {
+        var ins = item.Install;
+        if (ins.Method != "winget" || ins.Id == null) return StepOutcome.Fail("仅 winget 支持降级");
+        var v = item.Version;
+        if (string.IsNullOrEmpty(v)) return StepOutcome.Fail("未选择目标版本");
+        ctx.Step($"降级到 {v} …");
+        var r = await Proc.RunAsync("winget", new[]
+        {
+            "install", "--id", ins.Id, "-e", "--version", v, "--force",
+            "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity",
+        }, ct: ctx.Ct);
+        return r.Ok ? StepOutcome.Done($"已降级到 {v}") : StepOutcome.Fail($"降级退出码 {r.ExitCode}");
     }
 
     private const string Updated = "已更新";

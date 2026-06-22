@@ -165,16 +165,19 @@ public sealed class CategoryGroupViewModel : ObservableObject
     }
 }
 
-/// <summary>One row in the running-progress list.</summary>
+/// <summary>One row in the running-progress list: status pill + start/end/duration + expandable steps.</summary>
 public sealed class ProgressItemViewModel : ObservableObject
 {
     public string Name { get; }
     public string Method { get; }
+    public System.Collections.ObjectModel.ObservableCollection<string> Details { get; } = new();
+    public RelayCommand ToggleDetailsCommand { get; }
 
     public ProgressItemViewModel(string name, string method)
     {
         Name = name;
         Method = method;
+        ToggleDetailsCommand = new RelayCommand(_ => IsDetailsOpen = !IsDetailsOpen);
     }
 
     private string _status = "排队";
@@ -183,4 +186,46 @@ public sealed class ProgressItemViewModel : ObservableObject
     /// <summary>queued | running | ok | failed | skip — drives the row pill colour via DataTrigger.</summary>
     private string _kind = "queued";
     public string Kind { get => _kind; set => Set(ref _kind, value); }
+
+    public DateTime? StartTime { get; private set; }
+    public DateTime? EndTime { get; private set; }
+
+    public void MarkStarted() { StartTime = DateTime.Now; Raise(); }
+    public void MarkEnded() { EndTime = DateTime.Now; Raise(); }
+
+    public string TimeText
+    {
+        get
+        {
+            if (StartTime == null) return "";
+            var s = StartTime.Value.ToString("HH:mm:ss");
+            return EndTime == null ? $"开始 {s}" : $"{s} → {EndTime.Value:HH:mm:ss}";
+        }
+    }
+
+    public string DurationText
+    {
+        get
+        {
+            if (StartTime == null || EndTime == null) return "";
+            var d = EndTime.Value - StartTime.Value;
+            return d.TotalSeconds >= 60 ? $"耗时 {(int)d.TotalMinutes}分{d.Seconds}秒" : $"耗时 {d.TotalSeconds:0.0}秒";
+        }
+    }
+
+    public void AddDetail(string line)
+    {
+        Details.Add(line);
+        OnPropertyChanged(nameof(HasDetails));
+    }
+    public bool HasDetails => Details.Count > 0;
+
+    private bool _isDetailsOpen;
+    public bool IsDetailsOpen { get => _isDetailsOpen; set => Set(ref _isDetailsOpen, value); }
+
+    private void Raise()
+    {
+        OnPropertyChanged(nameof(TimeText));
+        OnPropertyChanged(nameof(DurationText));
+    }
 }

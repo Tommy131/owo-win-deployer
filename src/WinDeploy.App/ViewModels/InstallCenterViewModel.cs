@@ -16,6 +16,7 @@ public sealed class InstallCenterViewModel : ObservableObject
         ["dev"] = "开发工具链", ["system"] = "系统依赖", ["ide"] = "IDE / 编辑器",
         ["ai"] = "AI 工具", ["office"] = "办公 / 通讯", ["media"] = "媒体",
         ["db-api"] = "数据库 / API", ["vm"] = "虚拟化", ["games"] = "游戏平台",
+        ["tools"] = "实用工具",
     };
 
     private Catalog? _catalog;
