@@ -197,7 +197,7 @@ async Task<int> CmdSave(string root, string? message, bool push)
 void PrintHelp()
 {
     Console.WriteLine("""
-    WinDeploy — Windows 环境复刻器 (M1 / CLI)
+    OwO! Win Deployer — Windows 环境复刻器 (M1 / CLI)
 
       windeploy <命令> [选项]
 

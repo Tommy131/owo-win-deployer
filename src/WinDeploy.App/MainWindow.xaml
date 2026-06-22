@@ -22,6 +22,10 @@
                      VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding WindowTitle}" />
         </StackPanel>
 
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding Copyright}" FontSize="10"
+                   Foreground="{DynamicResource TextTertiary}" Margin="6,8,4,2" TextWrapping="Wrap"
+                   ToolTip="{Binding WindowTitle}" />
+
         <ListBox x:Name="Nav" ItemsSource="{Binding NavItems}" SelectedItem="{Binding SelectedNav}"
                  Background="Transparent" BorderThickness="0">
           <ListBox.ItemContainerStyle>

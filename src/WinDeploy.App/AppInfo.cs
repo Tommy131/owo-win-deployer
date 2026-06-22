@@ -8,6 +8,10 @@ public static class AppInfo
 {
     public const string Name = "OwO! Win Deployer";
 
+    /// <summary>Author / copyright holder.</summary>
+    public const string Author = "Tommy131";
+    public const string Copyright = "© 2026 Tommy131";
+
     /// <summary>owner/repo on GitHub — drives the self-update release check.</summary>
     public const string Repo = "Tommy131/owo-win-deployer";
 

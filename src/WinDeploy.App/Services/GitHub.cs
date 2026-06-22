@@ -81,7 +81,7 @@ public static class GitHub
     private static async Task<string> GetAsync(string url)
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-        http.DefaultRequestHeaders.UserAgent.ParseAdd("WinDeploy");
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("OwO-Win-Deployer");
         return await http.GetStringAsync(url);
     }
 }

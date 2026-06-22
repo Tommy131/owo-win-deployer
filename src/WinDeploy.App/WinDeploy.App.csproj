@@ -12,6 +12,9 @@
     <Product>OwO! Win Deployer</Product>
     <Version>1.0.0</Version>
     <AssemblyTitle>OwO! Win Deployer</AssemblyTitle>
+    <Authors>Tommy131</Authors>
+    <Company>Tommy131</Company>
+    <Copyright>© 2026 Tommy131</Copyright>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using WinDeploy.Core.Util;
 
 namespace WinDeploy.App.Services;
 
@@ -12,7 +13,7 @@ public static class WinLibs
     /// <summary>WinLibs (brechtsanders) — uses .zip assets.</summary>
     public static async Task<List<WinLibsVariant>> GetVariantsAsync(bool x64)
     {
-        var arch = x64 ? "x86_64" : "i686";
+        var arch = Arch.MingwToken(x64);
         var assets = await GitHub.LatestAssetsAsync("brechtsanders/winlibs_mingw");
         var result = new List<WinLibsVariant>();
         foreach (var (name, url) in assets)
@@ -27,7 +28,7 @@ public static class WinLibs
     /// <summary>niXman mingw-builds-binaries — .7z assets (needs 7-Zip to extract).</summary>
     public static async Task<List<WinLibsVariant>> GetMingwBuildsAsync(bool x64)
     {
-        var arch = x64 ? "x86_64" : "i686";
+        var arch = Arch.MingwToken(x64);
         var assets = await GitHub.LatestAssetsAsync("niXman/mingw-builds-binaries");
         var result = new List<WinLibsVariant>();
         foreach (var (name, url) in assets)

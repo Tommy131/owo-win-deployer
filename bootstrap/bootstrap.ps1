@@ -1,5 +1,5 @@
 #requires -version 5
-# WinDeploy 引导 —— 在全新设备上一行启动：
+# OwO! Win Deployer 引导 —— 在全新设备上一行启动：
 #   irm https://raw.githubusercontent.com/Tommy131/owo-win-deployer/main/bootstrap/bootstrap.ps1 | iex
 $ErrorActionPreference = 'Stop'
 
@@ -9,7 +9,7 @@ $ExeUrl = 'https://github.com/Tommy131/owo-win-deployer/releases/latest/download
 
 function Have($c) { [bool](Get-Command $c -ErrorAction SilentlyContinue) }
 
-Write-Host '== WinDeploy bootstrap ==' -ForegroundColor Cyan
+Write-Host '== OwO! Win Deployer bootstrap ==' -ForegroundColor Cyan
 
 if (-not (Have 'winget')) {
     Write-Warning 'winget（App Installer）缺失，请先从 Microsoft Store 安装 “App Installer” 后重试。'
@@ -34,7 +34,7 @@ try {
     Write-Host '下载最新 WinDeploy.exe ...' -ForegroundColor Cyan
     Invoke-WebRequest -Uri $ExeUrl -OutFile $Exe -UseBasicParsing
     Start-Process $Exe -WorkingDirectory $Root
-    Write-Host '已启动 WinDeploy。' -ForegroundColor Green
+    Write-Host '已启动 OwO! Win Deployer。' -ForegroundColor Green
 } catch {
     Write-Warning "下载 Release exe 失败（可能尚未发布）：$($_.Exception.Message)"
     if (Have 'dotnet') {

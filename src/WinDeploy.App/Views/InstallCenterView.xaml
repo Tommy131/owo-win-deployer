@@ -118,50 +118,62 @@
                                       CommandParameter="{Binding}" />
                       </Border.InputBindings>
                       <Border.ContextMenu>
-                        <ContextMenu Background="{DynamicResource CardBg}">
-                          <ContextMenu.Resources>
-                            <Style TargetType="MenuItem">
-                              <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
-                              <Setter Property="Padding" Value="8,4" />
-                            </Style>
-                          </ContextMenu.Resources>
-                          <MenuItem Header="快速安装到默认路径"
+                        <ContextMenu Style="{StaticResource ThemedContextMenu}">
+                          <MenuItem Header="快速安装到默认路径" Style="{StaticResource ThemedMenuItem}"
                                     Visibility="{Binding NotInstalled, Converter={StaticResource BoolToVis}}"
                                     Command="{Binding PlacementTarget.Tag.InstallCardCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                    CommandParameter="{Binding}" />
-                          <MenuItem Header="检查更新"
+                                    CommandParameter="{Binding}">
+                            <MenuItem.Icon><TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{DynamicResource TextSecondary}" /></MenuItem.Icon>
+                          </MenuItem>
+                          <MenuItem Header="检查更新" Style="{StaticResource ThemedMenuItem}"
                                     Visibility="{Binding CanUpdate, Converter={StaticResource BoolToVis}}"
                                     Command="{Binding PlacementTarget.Tag.UpdateCardCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                    CommandParameter="{Binding}" />
-                          <MenuItem Header="启动"
+                                    CommandParameter="{Binding}">
+                            <MenuItem.Icon><TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{DynamicResource TextSecondary}" /></MenuItem.Icon>
+                          </MenuItem>
+                          <MenuItem Header="启动" Style="{StaticResource ThemedMenuItem}"
                                     Visibility="{Binding ShowLaunch, Converter={StaticResource BoolToVis}}"
                                     Command="{Binding PlacementTarget.Tag.LaunchCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                    CommandParameter="{Binding}" />
-                          <MenuItem Header="停止"
+                                    CommandParameter="{Binding}">
+                            <MenuItem.Icon><TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{DynamicResource TextSecondary}" /></MenuItem.Icon>
+                          </MenuItem>
+                          <MenuItem Header="停止" Style="{StaticResource ThemedMenuItem}"
                                     Visibility="{Binding ShowStop, Converter={StaticResource BoolToVis}}"
                                     Command="{Binding PlacementTarget.Tag.StopCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                    CommandParameter="{Binding}" />
-                          <MenuItem Header="重启"
+                                    CommandParameter="{Binding}">
+                            <MenuItem.Icon><TextBlock Text="&#xE71A;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{DynamicResource TextSecondary}" /></MenuItem.Icon>
+                          </MenuItem>
+                          <MenuItem Header="重启" Style="{StaticResource ThemedMenuItem}"
                                     Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}"
                                     Command="{Binding PlacementTarget.Tag.RestartCardCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                    CommandParameter="{Binding}" />
-                          <Separator />
-                          <MenuItem Header="打开软件目录"
+                                    CommandParameter="{Binding}">
+                            <MenuItem.Icon><TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{DynamicResource TextSecondary}" /></MenuItem.Icon>
+                          </MenuItem>
+                          <Separator Style="{StaticResource ThemedSeparator}" />
+                          <MenuItem Header="打开软件目录" Style="{StaticResource ThemedMenuItem}"
                                     Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVis}}"
                                     Command="{Binding PlacementTarget.Tag.OpenDirCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                    CommandParameter="{Binding}" />
-                          <MenuItem Header="前往官网"
+                                    CommandParameter="{Binding}">
+                            <MenuItem.Icon><TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{DynamicResource TextSecondary}" /></MenuItem.Icon>
+                          </MenuItem>
+                          <MenuItem Header="前往官网" Style="{StaticResource ThemedMenuItem}"
                                     Visibility="{Binding HasHomepage, Converter={StaticResource BoolToVis}}"
                                     Command="{Binding PlacementTarget.Tag.OpenHomepageCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                    CommandParameter="{Binding}" />
-                          <MenuItem Header="详情…"
+                                    CommandParameter="{Binding}">
+                            <MenuItem.Icon><TextBlock Text="&#xE774;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{DynamicResource TextSecondary}" /></MenuItem.Icon>
+                          </MenuItem>
+                          <MenuItem Header="详情…" Style="{StaticResource ThemedMenuItem}"
                                     Command="{Binding PlacementTarget.Tag.OpenDetailCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                    CommandParameter="{Binding}" />
-                          <Separator />
-                          <MenuItem Header="卸载"
+                                    CommandParameter="{Binding}">
+                            <MenuItem.Icon><TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{DynamicResource TextSecondary}" /></MenuItem.Icon>
+                          </MenuItem>
+                          <Separator Style="{StaticResource ThemedSeparator}" />
+                          <MenuItem Header="卸载" Style="{StaticResource ThemedMenuItem}"
                                     Visibility="{Binding CanUninstall, Converter={StaticResource BoolToVis}}"
                                     Command="{Binding PlacementTarget.Tag.UninstallCardCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                                    CommandParameter="{Binding}" />
+                                    CommandParameter="{Binding}">
+                            <MenuItem.Icon><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="{DynamicResource TextSecondary}" /></MenuItem.Icon>
+                          </MenuItem>
                         </ContextMenu>
                       </Border.ContextMenu>
                       <StackPanel>

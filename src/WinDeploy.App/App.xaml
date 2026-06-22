@@ -388,6 +388,69 @@
         <Setter Property="BorderBrush" Value="{DynamicResource WarnFg}" />
       </Style>
 
+      <!-- Themed context menu (matches the app theme instead of the OS default) -->
+      <Style x:Key="ThemedContextMenu" TargetType="ContextMenu">
+        <Setter Property="Background" Value="{DynamicResource CardBg}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}" />
+        <Setter Property="Template">
+          <Setter.Value>
+            <ControlTemplate TargetType="ContextMenu">
+              <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                      BorderThickness="1" CornerRadius="8" Padding="4">
+                <Border.Effect>
+                  <DropShadowEffect Color="#33000000" BlurRadius="12" ShadowDepth="2" Direction="270" />
+                </Border.Effect>
+                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+              </Border>
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
+      </Style>
+
+      <Style x:Key="ThemedMenuItem" TargetType="MenuItem">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Template">
+          <Setter.Value>
+            <ControlTemplate TargetType="MenuItem">
+              <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6"
+                      Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="22" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <ContentPresenter Grid.Column="0" ContentSource="Icon" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                  <ContentPresenter Grid.Column="1" ContentSource="Header" VerticalAlignment="Center" Margin="8,0,4,0"
+                                    RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}" />
+                </Grid>
+              </Border>
+              <ControlTemplate.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                  <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBg}" />
+                  <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                  <Setter Property="Foreground" Value="{DynamicResource TextTertiary}" />
+                </Trigger>
+              </ControlTemplate.Triggers>
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
+      </Style>
+
+      <Style x:Key="ThemedSeparator" TargetType="Separator">
+        <Setter Property="Template">
+          <Setter.Value>
+            <ControlTemplate TargetType="Separator">
+              <Border Height="1" Background="{DynamicResource BorderSoft}" Margin="8,4" />
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
+      </Style>
+
       <!-- Page → View map -->
       <DataTemplate DataType="{x:Type vm:InstallCenterViewModel}">
         <views:InstallCenterView />

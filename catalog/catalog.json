@@ -392,6 +392,48 @@
       "install": { "method": "manual" },
       "detect": { "arp": "DRAM Calculator" } },
 
+    { "id": "everything", "name": "Everything", "summary": "极速文件名搜索", "icon": "assets/icons/everything.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.voidtools.com/zh-cn/downloads/",
+      "install": { "method": "winget", "id": "voidtools.Everything" },
+      "detect": { "arp": "Everything" } },
+
+    { "id": "sharex", "name": "ShareX", "summary": "截图 / 录屏 / 文件分享", "icon": "assets/icons/sharex.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://getsharex.com/",
+      "install": { "method": "winget", "id": "ShareX.ShareX" },
+      "detect": { "arp": "ShareX" } },
+
+    { "id": "powertoys", "name": "PowerToys", "summary": "微软 Windows 实用工具集（选择 GitHub 发布版，按平台过滤）", "icon": "assets/icons/powertoys.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://github.com/microsoft/PowerToys/releases",
+      "install": { "method": "github-release" },
+      "detect": { "arp": "PowerToys" } },
+
+    { "id": "watt-toolkit", "name": "Watt Toolkit", "summary": "Steam++ 游戏 / 网络加速（选择 GitHub 发布版，按平台过滤）", "icon": "assets/icons/watt-toolkit.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://steampp.net/",
+      "install": { "method": "github-release", "repo": "https://github.com/BeyondDimension/SteamTools" },
+      "detect": { "path": "${ToolsDir}/watt-toolkit", "arp": "Watt Toolkit" } },
+
+    { "id": "dism-plus", "name": "Dism++", "summary": "系统精简 / 清理 / 维护（选择 GitHub 发布版下载）", "icon": "assets/icons/dism-plus.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://github.com/Chuyu-Team/Dism-Multi-language/releases",
+      "install": { "method": "github-release" },
+      "detect": { "path": "${ToolsDir}/dism-plus", "arp": "Dism++" } },
+
+    { "id": "typora", "name": "Typora", "summary": "Markdown 编辑器（官网手动下载）", "icon": "assets/icons/typora.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.typora.io/",
+      "install": { "method": "manual" },
+      "detect": { "arp": "Typora" } },
+
+    { "id": "utools", "name": "uTools", "summary": "效率工具箱 / 启动器（官网手动下载）", "icon": "assets/icons/utools.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.u-tools.cn/download/",
+      "install": { "method": "manual" },
+      "detect": { "arp": "uTools" } },
+
     // ── 游戏辅助 ─────────────────────────────
     { "id": "openspeedy", "name": "OpenSpeedy", "summary": "游戏 / 程序变速工具（选择 GitHub 发布版下载）", "icon": "assets/icons/openspeedy.svg",
       "category": "games", "default": false,

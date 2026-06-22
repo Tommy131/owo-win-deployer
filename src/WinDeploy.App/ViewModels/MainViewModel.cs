@@ -36,6 +36,7 @@ public sealed class MainViewModel : ObservableObject
 
     public string AppName => WinDeploy.App.AppInfo.Name;
     public string WindowTitle => WinDeploy.App.AppInfo.TitleWithVersion;
+    public string Copyright => $"{WinDeploy.App.AppInfo.Copyright} · v{WinDeploy.App.AppInfo.Version}";
 
     public MainViewModel()
     {
@@ -442,10 +443,10 @@ public sealed class MainViewModel : ObservableObject
     /// zip/7z → portable-extract to ${ToolsDir}/&lt;id&gt;; otherwise run the downloaded installer.</summary>
     private async Task InstallFromGitHubReleaseAsync(CatalogItem item)
     {
-        var repo = GitHubRepoFromUrl(item.Homepage);
+        var repo = GitHubRepoFromUrl(item.Install.Repo) ?? GitHubRepoFromUrl(item.Homepage);
         if (repo == null)
         {
-            MessageBox.Show($"无法从主页地址识别 GitHub 仓库：\n{item.Homepage}", item.Name,
+            MessageBox.Show($"无法识别 GitHub 仓库（install.repo / homepage）：\n{item.Install.Repo ?? item.Homepage}", item.Name,
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -479,12 +480,16 @@ public sealed class MainViewModel : ObservableObject
             return;
         }
 
-        var assetLabels = rel.Assets.Select(a => $"{a.Name}   （{Mb(a.Size)}）").ToList();
+        // 按系统平台过滤掉用不上的发行版（如 x64 机器上的 arm64）；过滤后为空则全部列出。
+        var assets = rel.Assets.Where(a => WinDeploy.Core.Util.Arch.AssetUsable(a.Name)).ToList();
+        if (assets.Count == 0) assets = rel.Assets;
+
+        var assetLabels = assets.Select(a => $"{a.Name}   （{Mb(a.Size)}）").ToList();
         var dlgAsset = new Views.ChoiceDialog($"选择文件 · {rel.Tag}",
-            "请选择要下载的文件（压缩包自动解压、便携 exe 直接放入安装目录、Setup 安装程序直接运行）：",
+            "请选择要下载的文件（已按当前系统平台过滤；压缩包自动解压、便携 exe 放入安装目录、Setup 直接运行）：",
             assetLabels, 0) { Owner = Application.Current.MainWindow };
         if (dlgAsset.ShowDialog() != true || dlgAsset.SelectedIndex < 0) return;
-        var asset = rel.Assets[dlgAsset.SelectedIndex];
+        var asset = assets[dlgAsset.SelectedIndex];
 
         var name = asset.Name.ToLowerInvariant();
         var isInstaller = (name.EndsWith(".exe") || name.EndsWith(".msi")) && name.Contains("setup");
