@@ -33,8 +33,18 @@ public static class IconExtractor
     private const uint SHGFI_ICON = 0x000000100;
     private const uint SHGFI_LARGEICON = 0x000000000;
 
-    /// <summary>Best icon for a file/exe: embedded icon, else the Shell's associated icon, else null.</summary>
+    /// <summary>The app's own EMBEDDED icon, or null. Embedded-only on purpose: it must never return the
+    /// generic shell "application" icon, otherwise an installed console tool with no embedded icon (git,
+    /// python, ffmpeg…) would override its nice bundled brand icon with a blank one.</summary>
     public static BitmapSource? FromExe(string? exe)
+    {
+        if (string.IsNullOrWhiteSpace(exe) || !File.Exists(exe)) return null;
+        return FromEmbedded(exe);
+    }
+
+    /// <summary>Best-effort ANY icon: embedded, else the Shell's associated icon. For callers that have no
+    /// bundled brand icon to protect (startup items / borrowing a running process's icon).</summary>
+    public static BitmapSource? FromExeAnyIcon(string? exe)
     {
         if (string.IsNullOrWhiteSpace(exe) || !File.Exists(exe)) return null;
         return FromEmbedded(exe) ?? FromShell(exe);

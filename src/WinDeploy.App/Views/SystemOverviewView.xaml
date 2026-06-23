@@ -78,21 +78,30 @@
           </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <!-- Physical disks / SMART -->
-        <TextBlock Text="物理磁盘健康 (SMART)" FontSize="14" FontWeight="SemiBold" Margin="2,14,0,8" />
+        <!-- Physical disks / SMART (点击磁盘查看 SMART 详情) -->
+        <TextBlock Text="物理磁盘健康 (SMART) · 点击磁盘查看详情" FontSize="14" FontWeight="SemiBold" Margin="2,14,0,8" />
         <ItemsControl ItemsSource="{Binding PhysicalDisks}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border Style="{StaticResource Card}" Padding="14,10" Margin="0,0,0,8">
+              <Border Style="{StaticResource Card}" Padding="14,10" Margin="0,0,0,8" Cursor="Hand"
+                      ToolTip="点击查看该磁盘的 SMART / 可靠性数据">
+                <Border.InputBindings>
+                  <MouseBinding MouseAction="LeftClick"
+                                Command="{Binding DataContext.ShowSmartCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}" />
+                </Border.InputBindings>
                 <Grid>
                   <StackPanel>
                     <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold" />
                     <TextBlock Text="{Binding Detail}" FontSize="12" Foreground="{DynamicResource TextSecondary}" Margin="0,2,0,0" />
                   </StackPanel>
-                  <Border CornerRadius="6" Padding="9,3" HorizontalAlignment="Right" VerticalAlignment="Center"
-                          Background="{DynamicResource OkBg}">
-                    <TextBlock Text="{Binding Health}" FontSize="12" Foreground="{DynamicResource OkFg}" />
-                  </Border>
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Border CornerRadius="6" Padding="9,3" Background="{DynamicResource OkBg}">
+                      <TextBlock Text="{Binding Health}" FontSize="12" Foreground="{DynamicResource OkFg}" />
+                    </Border>
+                    <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="12"
+                               Foreground="{DynamicResource TextTertiary}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                  </StackPanel>
                 </Grid>
               </Border>
             </DataTemplate>

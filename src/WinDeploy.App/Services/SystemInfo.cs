@@ -4,7 +4,28 @@ using WinDeploy.Core.Util;
 namespace WinDeploy.App.Services;
 
 public sealed record DiskInfo(string Drive, long SizeBytes, long FreeBytes, string? Label);
-public sealed record PhysDiskInfo(string Name, string? Media, string? Health, long SizeGb);
+public sealed record PhysDiskInfo(string Name, string? Media, string? Health, long SizeGb, string? DeviceId);
+
+/// <summary>Simplified SMART / reliability counters for one physical disk (from Get-StorageReliabilityCounter).
+/// Fields are null when the drive / driver doesn't expose them.</summary>
+public sealed class SmartInfo
+{
+    public string Friendly { get; set; } = "";
+    public string? Health { get; set; }
+    public string? Media { get; set; }
+    public string? Bus { get; set; }
+    public int? Temperature { get; set; }
+    public int? TemperatureMax { get; set; }
+    public int? Wear { get; set; }                 // % used (SSD endurance)
+    public long? PowerOnHours { get; set; }
+    public long? PowerCycles { get; set; }
+    public long? StartStop { get; set; }
+    public long? ReadErrorsTotal { get; set; }
+    public long? ReadErrorsUncorrected { get; set; }
+    public long? WriteErrorsTotal { get; set; }
+    public long? WriteErrorsUncorrected { get; set; }
+    public bool Ok { get; set; }
+}
 
 /// <summary>A one-shot snapshot of the machine's health: OS, CPU, RAM, drives (+ SMART), battery, activation.</summary>
 public sealed class SystemSnapshot
@@ -40,7 +61,7 @@ public static class SystemInfo
         $disks = @(Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | Select-Object DeviceID,Size,FreeSpace,VolumeName)
         $bat = Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue | Select-Object -First 1
         $phys = @()
-        try { $phys = @(Get-PhysicalDisk -ErrorAction Stop | Select-Object FriendlyName,MediaType,HealthStatus,@{n='SizeGB';e={[math]::Round($_.Size/1GB,0)}}) } catch {}
+        try { $phys = @(Get-PhysicalDisk -ErrorAction Stop | Select-Object FriendlyName,MediaType,HealthStatus,DeviceId,@{n='SizeGB';e={[math]::Round($_.Size/1GB,0)}}) } catch {}
         $act = $null
         try { $act = (Get-CimInstance SoftwareLicensingProduct -Filter "ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f' AND PartialProductKey IS NOT NULL" -ErrorAction Stop | Select-Object -First 1).LicenseStatus } catch {}
         $uptime = [math]::Round(((Get-Date) - $os.LastBootUpTime).TotalHours, 1)
@@ -85,7 +106,7 @@ public static class SystemInfo
             foreach (var d in Items(e, "Disks"))
                 snap.Disks.Add(new DiskInfo(Str(d, "DeviceID") ?? "?", Num(d, "Size"), Num(d, "FreeSpace"), Str(d, "VolumeName")));
             foreach (var p in Items(e, "PhysicalDisks"))
-                snap.PhysicalDisks.Add(new PhysDiskInfo(Str(p, "FriendlyName") ?? "?", Str(p, "MediaType"), Str(p, "HealthStatus"), Num(p, "SizeGB")));
+                snap.PhysicalDisks.Add(new PhysDiskInfo(Str(p, "FriendlyName") ?? "?", Str(p, "MediaType"), Str(p, "HealthStatus"), Num(p, "SizeGB"), IdStr(p, "DeviceId")));
         }
         catch { /* partial / unparseable */ }
         return snap;
@@ -98,10 +119,69 @@ public static class SystemInfo
         else if (v.ValueKind == JsonValueKind.Object) yield return v;
     }
 
+    // Get-PhysicalDisk's DeviceId serializes as a number; read it as a string either way.
+    private const string SmartPs = """
+        [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+        $d = Get-PhysicalDisk -ErrorAction SilentlyContinue | Where-Object { "$($_.DeviceId)" -eq '__DEV__' } | Select-Object -First 1
+        if ($null -eq $d) { '{}'; exit }
+        $r = $d | Get-StorageReliabilityCounter -ErrorAction SilentlyContinue
+        [pscustomobject]@{
+          Friendly="$($d.FriendlyName)"; Health="$($d.HealthStatus)"; Media="$($d.MediaType)"; Bus="$($d.BusType)";
+          Temperature=$r.Temperature; TemperatureMax=$r.TemperatureMax; Wear=$r.Wear;
+          PowerOnHours=$r.PowerOnHours; StartStop=$r.StartStopCycleCount;
+          ReadErrorsTotal=$r.ReadErrorsTotal; ReadErrorsUncorrected=$r.ReadErrorsUncorrected;
+          WriteErrorsTotal=$r.WriteErrorsTotal; WriteErrorsUncorrected=$r.WriteErrorsUncorrected
+        } | ConvertTo-Json -Compress
+        """;
+
+    /// <summary>Read simplified SMART / reliability counters for one physical disk (by Get-PhysicalDisk DeviceId).</summary>
+    public static async Task<SmartInfo> GetSmartAsync(string? deviceId, CancellationToken ct = default)
+    {
+        var info = new SmartInfo();
+        if (string.IsNullOrWhiteSpace(deviceId)) return info;
+        ProcResult r;
+        try { r = await Proc.RunAsync("powershell", new[] { "-NoProfile", "-NonInteractive", "-Command", SmartPs.Replace("__DEV__", deviceId) }, ct: ct); }
+        catch { return info; }
+        if (string.IsNullOrWhiteSpace(r.StdOut)) return info;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(r.StdOut.Trim());
+            var e = doc.RootElement;
+            if (e.ValueKind != JsonValueKind.Object) return info;
+            info.Friendly = Str(e, "Friendly") ?? "";
+            info.Health = Str(e, "Health");
+            info.Media = Str(e, "Media");
+            info.Bus = Str(e, "Bus");
+            info.Temperature = NumI(e, "Temperature");
+            info.TemperatureMax = NumI(e, "TemperatureMax");
+            info.Wear = NumI(e, "Wear");
+            info.PowerOnHours = NumL(e, "PowerOnHours");
+            info.StartStop = NumL(e, "StartStop");
+            info.ReadErrorsTotal = NumL(e, "ReadErrorsTotal");
+            info.ReadErrorsUncorrected = NumL(e, "ReadErrorsUncorrected");
+            info.WriteErrorsTotal = NumL(e, "WriteErrorsTotal");
+            info.WriteErrorsUncorrected = NumL(e, "WriteErrorsUncorrected");
+            info.Ok = !string.IsNullOrEmpty(info.Friendly) || !string.IsNullOrEmpty(info.Health);
+        }
+        catch { /* unparseable */ }
+        return info;
+    }
+
+    private static string? IdStr(JsonElement e, string p)
+    {
+        if (!e.TryGetProperty(p, out var v)) return null;
+        return v.ValueKind switch { JsonValueKind.String => v.GetString(), JsonValueKind.Number => v.GetRawText(), _ => null };
+    }
+
     private static string? Str(JsonElement e, string p)
         => e.TryGetProperty(p, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
     private static long Num(JsonElement e, string p)
         => e.TryGetProperty(p, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt64(out var n) ? n : 0;
+    private static int? NumI(JsonElement e, string p)
+        => e.TryGetProperty(p, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt32(out var n) ? n : null;
+    private static long? NumL(JsonElement e, string p)
+        => e.TryGetProperty(p, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetInt64(out var n) ? n : null;
     private static double Dbl(JsonElement e, string p)
         => e.TryGetProperty(p, out var v) && v.ValueKind == JsonValueKind.Number && v.TryGetDouble(out var n) ? n : 0;
 }

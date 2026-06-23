@@ -19,6 +19,10 @@ public sealed class RegTweak
     public int Off { get; init; }
     public bool NeedsAdmin { get; init; }
     public bool RestartExplorer { get; init; }
+
+    /// <summary>Minimum Windows build this tweak applies to (0 = any). Tweaks above the running build are
+    /// hidden — e.g. the Win11 classic menu / clock-seconds tweaks don't show on Windows 10.</summary>
+    public int MinBuild { get; init; }
 }
 
 /// <summary>Curated, reversible system tweaks (Explorer / appearance / privacy) that sysadmins apply on
@@ -37,15 +41,15 @@ public static class RegTweaks
         new RegTweak { Id = "hidden", Title = "显示隐藏文件", Detail = "显示隐藏的文件和文件夹",
             Path = Adv, Value = "Hidden", On = 1, Off = 2, RestartExplorer = true },
         new RegTweak { Id = "darkapps", Title = "应用深色模式", Detail = "应用使用深色主题",
-            Path = Personalize, Value = "AppsUseLightTheme", On = 0, Off = 1 },
+            Path = Personalize, Value = "AppsUseLightTheme", On = 0, Off = 1, MinBuild = OsInfo.Win10_1809 },
         new RegTweak { Id = "darksys", Title = "系统深色模式", Detail = "任务栏 / 开始菜单使用深色主题",
-            Path = Personalize, Value = "SystemUsesLightTheme", On = 0, Off = 1 },
+            Path = Personalize, Value = "SystemUsesLightTheme", On = 0, Off = 1, MinBuild = OsInfo.Win10_1809 },
         new RegTweak { Id = "thispc", Title = "资源管理器默认打开“此电脑”", Detail = "而非“快速访问 / 主文件夹”",
             Path = Adv, Value = "LaunchTo", On = 1, Off = 2 },
-        new RegTweak { Id = "clockseconds", Title = "任务栏时钟显示秒", Detail = "在系统托盘时钟中显示秒（Win11）",
-            Path = Adv, Value = "ShowSecondsInSystemClock", On = 1, Off = 0, RestartExplorer = true },
+        new RegTweak { Id = "clockseconds", Title = "任务栏时钟显示秒", Detail = "在系统托盘时钟中显示秒（Win11 22H2+）",
+            Path = Adv, Value = "ShowSecondsInSystemClock", On = 1, Off = 0, RestartExplorer = true, MinBuild = OsInfo.Win11_22H2 },
         new RegTweak { Id = "classicmenu", Title = "经典右键菜单（Win11）", Detail = "恢复 Windows 10 风格的完整右键菜单",
-            Kind = TweakKind.ClassicMenu, Path = ClassicClsid, RestartExplorer = true },
+            Kind = TweakKind.ClassicMenu, Path = ClassicClsid, RestartExplorer = true, MinBuild = OsInfo.Win11_21H2 },
         new RegTweak { Id = "telemetry", Title = "关闭遥测（需管理员）", Detail = "将诊断数据级别设为“安全/关闭”（HKLM 策略）",
             Hive = RegistryHive.LocalMachine, Path = @"SOFTWARE\Policies\Microsoft\Windows\DataCollection",
             Value = "AllowTelemetry", On = 0, Off = 1, NeedsAdmin = true },

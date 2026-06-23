@@ -7,7 +7,7 @@
     "ToolsDir": "%LOCALAPPDATA%/tools"
   },
 
-  "categories": ["dev", "system", "ide", "ai", "office", "media", "db-api", "vm", "games", "tools"],
+  "categories": ["dev", "system", "ide", "ai", "office", "media", "db-api", "vm", "games", "browser", "proxy", "dict", "hwmon", "tools"],
 
   "items": [
     // ── 开发工具链（默认强制） ─────────────────────────────
@@ -42,6 +42,7 @@
 
     { "id": "pwsh", "name": "PowerShell 7", "summary": "跨平台 PowerShell（同步 $PROFILE 配置）", "icon": "assets/icons/pwsh.svg",
       "category": "dev", "default": false,
+      "homepage": "https://learn.microsoft.com/powershell",
       "install": { "method": "winget", "id": "Microsoft.PowerShell" },
       "detect": { "cmd": "pwsh" },
       "config": { "source": "configs/pwsh", "target": "%USERPROFILE%/Documents/PowerShell", "files": ["Microsoft.PowerShell_profile.ps1"], "applyWhen": "ifInstalled" } },
@@ -73,6 +74,7 @@
 
     { "id": "pandoc", "name": "Pandoc", "summary": "文档格式转换", "icon": "assets/icons/pandoc.svg",
       "category": "dev", "default": true,
+      "homepage": "https://pandoc.org",
       "install": { "method": "winget", "id": "JohnMacFarlane.Pandoc" },
       "detect": { "cmd": "pandoc" } },
 
@@ -284,7 +286,7 @@
 
     // ── 实用工具（便携） ─────────────────────────────
     { "id": "v2rayn", "name": "v2rayN", "summary": "代理 / 科学上网客户端", "icon": "assets/icons/v2rayn.svg",
-      "category": "tools", "default": false,
+      "category": "proxy", "default": false,
       "homepage": "https://github.com/2dust/v2rayN",
       "install": { "method": "winget", "id": "2dust.v2rayN" },
       "detect": { "arp": "v2rayN" } },
@@ -302,13 +304,13 @@
       "detect": { "arp": "ScreenToGif" } },
 
     { "id": "crystaldiskinfo", "name": "CrystalDiskInfo", "summary": "硬盘 S.M.A.R.T 健康监测", "icon": "assets/icons/crystaldiskinfo.svg",
-      "category": "tools", "default": false,
+      "category": "hwmon", "default": false,
       "homepage": "https://crystalmark.info/en/software/crystaldiskinfo/",
       "install": { "method": "winget", "id": "CrystalDewWorld.CrystalDiskInfo" },
       "detect": { "arp": "CrystalDiskInfo" } },
 
     { "id": "cc-switch", "name": "CC Switch", "summary": "AI 服务本地代理网关 / API 渠道切换（选择 GitHub 发布版下载）", "icon": "assets/icons/cc-switch.svg",
-      "category": "tools", "default": false,
+      "category": "proxy", "default": false,
       "homepage": "https://github.com/farion1231/cc-switch",
       "install": { "method": "github-release" },
       "detect": { "path": "${ToolsDir}/cc-switch", "arp": "CC Switch" } },
@@ -320,13 +322,13 @@
       "detect": { "arp": "7-Zip" } },
 
     { "id": "chrome", "name": "Google Chrome", "summary": "网页浏览器", "icon": "assets/icons/chrome.svg",
-      "category": "tools", "default": false,
+      "category": "browser", "default": false,
       "homepage": "https://www.google.com/chrome/",
       "install": { "method": "winget", "id": "Google.Chrome" },
       "detect": { "arp": "Google Chrome" } },
 
     { "id": "de-assist", "name": "德语助手", "summary": "德语词典 / 学习工具", "icon": "assets/icons/de-assist.svg",
-      "category": "tools", "default": false,
+      "category": "dict", "default": false,
       "homepage": "https://www.francochinois.com/v4/de/app/download",
       "install": { "method": "winget", "id": "EuSoft.Dehelper" },
       "detect": { "arp": "德语助手" } },
@@ -346,38 +348,38 @@
 
     // ── 硬件检测 / 诊断 / 跑分 ─────────────────────────────
     { "id": "hwinfo", "name": "HWiNFO", "summary": "硬件信息 / 传感器监控", "icon": "assets/icons/hwinfo.svg",
-      "category": "tools", "default": false,
+      "category": "hwmon", "default": false,
       "homepage": "https://www.hwinfo.com/download/",
       "install": { "method": "winget", "id": "REALiX.HWiNFO" },
       "detect": { "arp": "HWiNFO" } },
 
     { "id": "cpu-z", "name": "CPU-Z", "summary": "CPU / 主板 / 内存信息", "icon": "assets/icons/cpu-z.svg",
-      "category": "tools", "default": false,
+      "category": "hwmon", "default": false,
       "homepage": "https://www.cpuid.com/softwares/cpu-z.html",
       "install": { "method": "winget", "id": "CPUID.CPU-Z" },
       "detect": { "arp": "CPU-Z" } },
 
     { "id": "gpu-z", "name": "GPU-Z", "summary": "显卡信息 / 传感器", "icon": "assets/icons/gpu-z.svg",
-      "category": "tools", "default": false,
+      "category": "hwmon", "default": false,
       "homepage": "https://www.techpowerup.com/gpuz/",
       "install": { "method": "winget", "id": "TechPowerUp.GPU-Z" },
       "detect": { "arp": "GPU-Z" } },
 
     { "id": "crystaldiskmark", "name": "CrystalDiskMark", "summary": "磁盘读写跑分", "icon": "assets/icons/crystaldiskmark.svg",
-      "category": "tools", "default": false,
+      "category": "hwmon", "default": false,
       "homepage": "https://crystalmark.info/en/software/crystaldiskmark/",
       "install": { "method": "winget", "id": "CrystalDewWorld.CrystalDiskMark" },
       "detect": { "arp": "CrystalDiskMark" } },
 
     { "id": "furmark", "name": "FurMark 2", "summary": "GPU 烤机 / 压力测试", "icon": "assets/icons/furmark.svg",
-      "category": "tools", "default": false,
+      "category": "hwmon", "default": false,
       "homepage": "https://geeks3d.com/furmark/",
       "install": { "method": "winget", "id": "Geeks3D.FurMark.2" },
       "launchExe": "FurMark_GUI",
       "detect": { "arp": "FurMark" } },
 
     { "id": "msi-afterburner", "name": "MSI Afterburner", "summary": "显卡超频 / 风扇 / 监控", "icon": "assets/icons/msi-afterburner.svg",
-      "category": "tools", "default": false,
+      "category": "hwmon", "default": false,
       "homepage": "https://www.msi.com/Landing/afterburner/graphics-cards",
       "install": { "method": "winget", "id": "Guru3D.Afterburner" },
       "detect": { "arp": "MSI Afterburner" } },
@@ -389,13 +391,13 @@
       "detect": { "path": "${ToolsDir}/ntpwedit", "arp": "NTPWEdit" } },
 
     { "id": "rtss", "name": "RivaTuner Statistics Server", "summary": "帧率显示 / 帧数限制 / 屏幕叠加 (RTSS)", "icon": "assets/icons/rtss.svg",
-      "category": "tools", "default": false,
+      "category": "hwmon", "default": false,
       "homepage": "https://www.guru3d.com/download/rtss-rivatuner-statistics-server-download/",
       "install": { "method": "winget", "id": "Guru3D.RTSS" },
       "detect": { "arp": "RivaTuner Statistics Server" } },
 
     { "id": "ryzen-dram-calc", "name": "Ryzen DRAM Calculator", "summary": "锐龙内存超频时序计算器（官网手动下载）", "icon": "assets/icons/ryzen-dram-calc.svg",
-      "category": "tools", "default": false,
+      "category": "hwmon", "default": false,
       "homepage": "https://www.guru3d.com/download/download-ryzen-dram-calculator/",
       "install": { "method": "manual" },
       "detect": { "arp": "DRAM Calculator" } },
@@ -453,6 +455,247 @@
       "category": "games", "default": false,
       "homepage": "https://github.com/FroggMaster/CreamInstaller/releases",
       "install": { "method": "github-release" },
-      "detect": { "path": "${ToolsDir}/creaminstaller", "arp": "CreamInstaller" } }
+      "detect": { "path": "${ToolsDir}/creaminstaller", "arp": "CreamInstaller" } },
+
+    // ══ 常用软件扩充（办公 / 通讯） ══════════════════════════════
+    { "id": "qq", "name": "QQ", "summary": "腾讯 QQ 即时通讯", "icon": "assets/icons/qq.svg",
+      "category": "office", "default": false,
+      "homepage": "https://im.qq.com",
+      "install": { "method": "winget", "id": "Tencent.QQ" },
+      "detect": { "arp": "腾讯QQ" } },
+
+    { "id": "tim", "name": "TIM", "summary": "QQ 办公简洁版", "icon": "assets/icons/tim.svg",
+      "category": "office", "default": false,
+      "homepage": "https://tim.qq.com",
+      "install": { "method": "winget", "id": "Tencent.TIM" },
+      "detect": { "arp": "TIM" } },
+
+    { "id": "dingtalk", "name": "钉钉", "summary": "阿里钉钉 办公协作", "icon": "assets/icons/dingtalk.svg",
+      "category": "office", "default": false,
+      "homepage": "https://www.dingtalk.com",
+      "install": { "method": "winget", "id": "Alibaba.DingTalk.Mainland" },
+      "detect": { "arp": "钉钉" } },
+
+    { "id": "wps", "name": "WPS Office", "summary": "金山办公套件（文字 / 表格 / 演示）", "icon": "assets/icons/wps.svg",
+      "category": "office", "default": false,
+      "homepage": "https://www.wps.cn",
+      "install": { "method": "winget", "id": "Kingsoft.WPSOffice" },
+      "detect": { "arp": "WPS" } },
+
+    { "id": "telegram", "name": "Telegram", "summary": "即时通讯", "icon": "assets/icons/telegram.svg",
+      "category": "office", "default": false,
+      "homepage": "https://telegram.org",
+      "install": { "method": "winget", "id": "Telegram.TelegramDesktop" },
+      "detect": { "arp": "Telegram" } },
+
+    { "id": "zoom", "name": "Zoom", "summary": "视频会议", "icon": "assets/icons/zoom.svg",
+      "category": "office", "default": false,
+      "homepage": "https://www.zoom.com",
+      "install": { "method": "winget", "id": "Zoom.Zoom" },
+      "detect": { "arp": "Zoom" } },
+
+    { "id": "foxmail", "name": "Foxmail", "summary": "邮件客户端", "icon": "assets/icons/foxmail.svg",
+      "category": "office", "default": false,
+      "homepage": "https://www.foxmail.com",
+      "install": { "method": "winget", "id": "Tencent.Foxmail" },
+      "detect": { "arp": "Foxmail" } },
+
+    // ══ 常用软件扩充（媒体） ══════════════════════════════
+    { "id": "qq-music", "name": "QQ音乐", "summary": "音乐播放", "icon": "assets/icons/qq-music.svg",
+      "category": "media", "default": false,
+      "homepage": "https://y.qq.com",
+      "install": { "method": "winget", "id": "Tencent.QQMusic" },
+      "detect": { "arp": "QQ音乐" } },
+
+    { "id": "douyin", "name": "抖音", "summary": "短视频（桌面版）", "icon": "assets/icons/douyin.svg",
+      "category": "media", "default": false,
+      "homepage": "https://www.douyin.com",
+      "install": { "method": "winget", "id": "ByteDance.Douyin" },
+      "detect": { "arp": "抖音" } },
+
+    { "id": "bilibili", "name": "哔哩哔哩", "summary": "B 站桌面端", "icon": "assets/icons/bilibili.svg",
+      "category": "media", "default": false,
+      "homepage": "https://www.bilibili.com",
+      "install": { "method": "winget", "id": "Bilibili.Bilibili" },
+      "detect": { "arp": "哔哩哔哩" } },
+
+    { "id": "potplayer", "name": "PotPlayer", "summary": "多媒体播放器", "icon": "assets/icons/potplayer.svg",
+      "category": "media", "default": false,
+      "homepage": "https://potplayer.daum.net",
+      "install": { "method": "winget", "id": "Daum.PotPlayer" },
+      "detect": { "arp": "PotPlayer" } },
+
+    { "id": "foobar2000", "name": "foobar2000", "summary": "轻量音频播放器", "icon": "assets/icons/foobar2000.svg",
+      "category": "media", "default": false,
+      "homepage": "https://www.foobar2000.org",
+      "install": { "method": "winget", "id": "PeterPawlowski.foobar2000" },
+      "detect": { "arp": "foobar2000" } },
+
+    { "id": "spotify", "name": "Spotify", "summary": "流媒体音乐", "icon": "assets/icons/spotify.svg",
+      "category": "media", "default": false,
+      "homepage": "https://www.spotify.com",
+      "install": { "method": "winget", "id": "Spotify.Spotify" } },
+
+    { "id": "itunes", "name": "iTunes", "summary": "苹果媒体管理", "icon": "assets/icons/itunes.svg",
+      "category": "media", "default": false,
+      "homepage": "https://www.apple.com/itunes/",
+      "install": { "method": "winget", "id": "Apple.iTunes" },
+      "detect": { "arp": "iTunes" } },
+
+    { "id": "handbrake", "name": "HandBrake", "summary": "视频转码", "icon": "assets/icons/handbrake.svg",
+      "category": "media", "default": false,
+      "homepage": "https://handbrake.fr",
+      "install": { "method": "winget", "id": "HandBrake.HandBrake" },
+      "detect": { "arp": "HandBrake" } },
+
+    // ══ 常用软件扩充（实用工具） ══════════════════════════════
+    { "id": "thunder", "name": "迅雷", "summary": "下载工具", "icon": "assets/icons/thunder.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.xunlei.com",
+      "install": { "method": "winget", "id": "Thunder.Thunder" },
+      "detect": { "arp": "迅雷" } },
+
+    { "id": "baidu-netdisk", "name": "百度网盘", "summary": "云存储", "icon": "assets/icons/baidu-netdisk.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://pan.baidu.com",
+      "install": { "method": "winget", "id": "Baidu.BaiduNetdisk" },
+      "detect": { "arp": "百度网盘" } },
+
+    { "id": "aliyundrive", "name": "阿里云盘", "summary": "云存储", "icon": "assets/icons/aliyundrive.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.alipan.com",
+      "install": { "method": "winget", "id": "Alibaba.aDrive" },
+      "detect": { "arp": "阿里云盘" } },
+
+    { "id": "winrar", "name": "WinRAR", "summary": "压缩 / 解压", "icon": "assets/icons/winrar.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.win-rar.com",
+      "install": { "method": "winget", "id": "RARLab.WinRAR" },
+      "detect": { "arp": "WinRAR" } },
+
+    { "id": "bandizip", "name": "Bandizip", "summary": "压缩 / 解压", "icon": "assets/icons/bandizip.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.bandisoft.com",
+      "install": { "method": "winget", "id": "Bandisoft.Bandizip" },
+      "detect": { "arp": "Bandizip" } },
+
+    { "id": "notepad-plus-plus", "name": "Notepad++", "summary": "文本 / 代码编辑器", "icon": "assets/icons/notepad-plus-plus.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://notepad-plus-plus.org",
+      "install": { "method": "winget", "id": "Notepad++.Notepad++" },
+      "detect": { "arp": "Notepad++" } },
+
+    { "id": "anydesk", "name": "AnyDesk", "summary": "远程桌面", "icon": "assets/icons/anydesk.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://anydesk.com",
+      "install": { "method": "winget", "id": "AnyDesk.AnyDesk" },
+      "detect": { "arp": "AnyDesk" } },
+
+    { "id": "todesk", "name": "ToDesk", "summary": "远程桌面", "icon": "assets/icons/todesk.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.todesk.com",
+      "install": { "method": "winget", "id": "Youqu.ToDesk" },
+      "detect": { "arp": "ToDesk" } },
+
+    { "id": "teamviewer", "name": "TeamViewer", "summary": "远程桌面", "icon": "assets/icons/teamviewer.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.teamviewer.com",
+      "install": { "method": "winget", "id": "TeamViewer.TeamViewer" },
+      "detect": { "arp": "TeamViewer" } },
+
+    { "id": "qq-browser", "name": "QQ浏览器", "summary": "网页浏览器", "icon": "assets/icons/qq-browser.svg",
+      "category": "browser", "default": false,
+      "homepage": "https://browser.qq.com",
+      "install": { "method": "winget", "id": "Tencent.QQBrowser" },
+      "detect": { "arp": "QQ浏览器" } },
+
+    { "id": "firefox", "name": "Mozilla Firefox", "summary": "网页浏览器", "icon": "assets/icons/firefox.svg",
+      "category": "browser", "default": false,
+      "homepage": "https://www.mozilla.org",
+      "install": { "method": "winget", "id": "Mozilla.Firefox" },
+      "detect": { "arp": "Mozilla Firefox" } },
+
+    { "id": "edge", "name": "Microsoft Edge", "summary": "网页浏览器", "icon": "assets/icons/edge.svg",
+      "category": "browser", "default": false,
+      "homepage": "https://www.microsoft.com/edge",
+      "install": { "method": "winget", "id": "Microsoft.Edge" },
+      "detect": { "arp": "Microsoft Edge" } },
+
+    { "id": "geek-uninstaller", "name": "Geek Uninstaller", "summary": "彻底卸载工具", "icon": "assets/icons/geek-uninstaller.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://geekuninstaller.com",
+      "install": { "method": "winget", "id": "GeekUninstaller.GeekUninstaller" } },
+
+    // ══ 常用软件扩充（开发工具链） ══════════════════════════════
+    { "id": "docker-desktop", "name": "Docker Desktop", "summary": "容器开发环境", "icon": "assets/icons/docker-desktop.svg",
+      "category": "dev", "default": false,
+      "homepage": "https://www.docker.com",
+      "install": { "method": "winget", "id": "Docker.DockerDesktop" },
+      "detect": { "arp": "Docker Desktop" } },
+
+    { "id": "rust", "name": "Rust", "summary": "Rust 工具链 (rustup)", "icon": "assets/icons/rust.svg",
+      "category": "dev", "default": false,
+      "homepage": "https://www.rust-lang.org",
+      "install": { "method": "winget", "id": "Rustlang.Rustup" },
+      "detect": { "cmd": "rustc" } },
+
+    // ══ 常用软件扩充（IDE / 编辑器） ══════════════════════════════
+    { "id": "sublime-text", "name": "Sublime Text", "summary": "文本 / 代码编辑器", "icon": "assets/icons/sublime-text.svg",
+      "category": "ide", "default": false,
+      "homepage": "https://www.sublimetext.com",
+      "install": { "method": "winget", "id": "SublimeHQ.SublimeText.4" } },
+
+    // ══ 常用软件扩充（数据库 / API） ══════════════════════════════
+    { "id": "postman", "name": "Postman", "summary": "API 调试", "icon": "assets/icons/postman.svg",
+      "category": "db-api", "default": false,
+      "homepage": "https://www.postman.com",
+      "install": { "method": "winget", "id": "Postman.Postman" } },
+
+    { "id": "dbeaver", "name": "DBeaver", "summary": "通用数据库客户端", "icon": "assets/icons/dbeaver.svg",
+      "category": "db-api", "default": false,
+      "homepage": "https://dbeaver.io",
+      "install": { "method": "winget", "id": "DBeaver.DBeaver.Community" } },
+
+    { "id": "redis-insight", "name": "Redis Insight", "summary": "Redis 可视化客户端", "icon": "assets/icons/redis-insight.svg",
+      "category": "db-api", "default": false,
+      "homepage": "https://redis.io",
+      "install": { "method": "winget", "id": "RedisInsight.RedisInsight" } },
+
+    { "id": "mongodb-compass", "name": "MongoDB Compass", "summary": "MongoDB 图形客户端", "icon": "assets/icons/mongodb-compass.svg",
+      "category": "db-api", "default": false,
+      "homepage": "https://www.mongodb.com",
+      "install": { "method": "winget", "id": "MongoDB.Compass.Full" } },
+
+    { "id": "heidisql", "name": "HeidiSQL", "summary": "MySQL / MariaDB 客户端", "icon": "assets/icons/heidisql.svg",
+      "category": "db-api", "default": false,
+      "homepage": "https://www.heidisql.com",
+      "install": { "method": "winget", "id": "HeidiSQL.HeidiSQL" } },
+
+    // ══ 常用软件扩充（AI 工具） ══════════════════════════════
+    { "id": "cursor", "name": "Cursor", "summary": "AI 代码编辑器", "icon": "assets/icons/cursor.svg",
+      "category": "ai", "default": false,
+      "homepage": "https://www.cursor.com",
+      "install": { "method": "winget", "id": "Anysphere.Cursor" } },
+
+    // ══ 常用软件扩充（游戏平台） ══════════════════════════════
+    { "id": "ubisoft-connect", "name": "Ubisoft Connect", "summary": "育碧游戏平台", "icon": "assets/icons/ubisoft-connect.svg",
+      "category": "games", "default": false,
+      "homepage": "https://www.ubisoft.com",
+      "install": { "method": "winget", "id": "Ubisoft.Connect" } },
+
+    { "id": "ea-app", "name": "EA app", "summary": "EA 游戏平台", "icon": "assets/icons/ea-app.svg",
+      "category": "games", "default": false,
+      "homepage": "https://www.ea.com",
+      "install": { "method": "winget", "id": "ElectronicArts.EADesktop" } },
+
+    { "id": "battlenet", "name": "Battle.net", "summary": "暴雪游戏平台", "icon": "assets/icons/battlenet.svg",
+      "category": "games", "default": false,
+      "homepage": "https://www.blizzard.com",
+      "install": { "method": "winget", "id": "Blizzard.BattleNet" } },
+
+    { "id": "gog-galaxy", "name": "GOG Galaxy", "summary": "GOG 游戏平台", "icon": "assets/icons/gog-galaxy.svg",
+      "category": "games", "default": false,
+      "homepage": "https://www.gog.com",
+      "install": { "method": "winget", "id": "GOG.Galaxy" } }
   ]
 }

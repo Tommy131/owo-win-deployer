@@ -32,7 +32,9 @@ public sealed class TweaksViewModel : ObservableObject
 
     public TweaksViewModel()
     {
-        foreach (var t in RegTweaks.All) Tweaks.Add(new TweakRowViewModel(t));
+        // Hide tweaks the running Windows build doesn't support (e.g. Win11-only items on Windows 10).
+        foreach (var t in RegTweaks.All)
+            if (OsInfo.AtLeastBuild(t.MinBuild)) Tweaks.Add(new TweakRowViewModel(t));
         ToggleCommand = new RelayCommand(p => { if (p is TweakRowViewModel r) Toggle(r); });
         RefreshCommand = new RelayCommand(_ => { foreach (var r in Tweaks) r.RefreshState(); });
     }

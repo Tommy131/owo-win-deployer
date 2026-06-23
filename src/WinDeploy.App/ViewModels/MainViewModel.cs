@@ -64,6 +64,7 @@ public sealed class MainViewModel : ObservableObject
         Progress.CancelRequested += () => _cts?.Cancel();
         Settings.Saved += () => Secrets.ExtraKeywords = SettingsViewModel.ParseKeywords(Settings.RedactKeywords);
         Settings.DeveloperModeChanged += on => { _devMode = on; Install.SetDeveloperMode(on); RebuildNav(); };
+        Settings.RefreshIconsRequested += () => _ = RefreshIconsManualAsync();
         Load();
 
         BuildNav();
@@ -112,7 +113,7 @@ public sealed class MainViewModel : ObservableObject
         _allNav.Add(new("", "环境变量", EnvVars));
         _allNav.Add(new("", "终端", Terminal));
         // ── 开发人员模式专属（高级 / 专业功能） ──
-        _allNav.Add(new("", "WSL", Wsl, advanced: true));
+        _allNav.Add(new("", "WSL", Wsl, advanced: true, minBuild: OsInfo.Win10_1607));
         _allNav.Add(new("", "系统调优", Tweaks, advanced: true));
         _allNav.Add(new("", "高级工具", AdvancedTools, advanced: true));
         _allNav.Add(new("", "日志", Logs));
@@ -125,7 +126,7 @@ public sealed class MainViewModel : ObservableObject
         var keep = SelectedNav;
         NavItems.Clear();
         foreach (var n in _allNav)
-            if (!n.Advanced || _devMode) NavItems.Add(n);
+            if ((!n.Advanced || _devMode) && OsInfo.AtLeastBuild(n.MinBuild)) NavItems.Add(n);
         SelectedNav = keep != null && NavItems.Contains(keep) ? keep : NavItems.FirstOrDefault();
     }
 
@@ -243,6 +244,7 @@ public sealed class MainViewModel : ObservableObject
         UpdateChecker.Reset();
 
         var items = Install.Groups.SelectMany(g => g.Items).ToList();
+        _ = FetchIconCacheAsync(items);   // 联网补全缺失图标到本地缓存（与检测并行，先行启动）
         using var gate = new SemaphoreSlim(8);
         var tasks = items.Select(async vm =>
         {
@@ -284,6 +286,36 @@ public sealed class MainViewModel : ObservableObject
         Install.IsLoading = false;
         _ = PrefetchDetailsAsync(items);
         _ = RefreshIconsAsync(items);
+    }
+
+    /// <summary>Manual 联网刷新软件图标 from Settings: fetch missing icons behind a busy dialog, then report.</summary>
+    private async Task RefreshIconsManualAsync()
+    {
+        var items = Install.Groups.SelectMany(g => g.Items).ToList();
+        Settings.IconNote = "正在联网获取 …";
+        var n = await Views.BusyDialog.RunAsync(Application.Current.MainWindow, "刷新软件图标",
+            "正在联网获取缺失的软件图标并缓存到本地…", () => FetchIconCacheAsync(items));
+        Settings.IconNote = n > 0 ? $"已补全并缓存 {n} 个图标" : "未发现需要补全的图标（均已就绪 / 本次未获取到）";
+    }
+
+    /// <summary>Batch-download HD brand icons for items that have no bundled icon, cache them under
+    /// %LOCALAPPDATA%, then adopt them — so missing icons don't leave letter badges. Best-effort.</summary>
+    private async Task<int> FetchIconCacheAsync(IReadOnlyList<AppItemViewModel> items)
+    {
+        try
+        {
+            var need = items.Where(vm => !vm.HasIcon)
+                            .Select(vm => (vm.Model.Id, vm.Model.Homepage, vm.Model.Name)).ToList();
+            if (need.Count == 0) return 0;
+            var n = await Services.IconCache.FetchMissingAsync(need, _repoRoot);
+            if (n > 0)
+            {
+                await Application.Current.Dispatcher.InvokeAsync(() => { foreach (var vm in items) vm.ReloadFromCache(); });
+                AuditLog.Action($"软件图标缓存：联网补全 {n} 个");
+            }
+            return n;
+        }
+        catch { return 0; /* best-effort; letter badge remains */ }
     }
 
     /// <summary>For installed items, replace the bundled icon with the app's real icon from its .exe.</summary>

@@ -14,12 +14,17 @@ public sealed class NavItemViewModel
     /// <summary>Advanced / professional page — only shown in the nav when 开发人员模式 is on.</summary>
     public bool Advanced { get; }
 
-    public NavItemViewModel(string glyph, string label, object page, bool advanced = false)
+    /// <summary>Minimum Windows build required for this page (0 = any). Pages above the running build are
+    /// hidden from the nav (e.g. WSL on pre-Windows 10).</summary>
+    public int MinBuild { get; }
+
+    public NavItemViewModel(string glyph, string label, object page, bool advanced = false, int minBuild = 0)
     {
         Glyph = glyph;
         Label = label;
         Page = page;
         Advanced = advanced;
+        MinBuild = minBuild;
     }
 }
 
@@ -49,6 +54,11 @@ public sealed class AppItemViewModel : ObservableObject
         ["db-api"] = ("#E1F5EE", "#085041"),
         ["vm"] = ("#FAEEDA", "#633806"),
         ["games"] = ("#F1EFE8", "#444441"),
+        ["browser"] = ("#E6F1FB", "#0C447C"),
+        ["proxy"] = ("#E1F5EE", "#085041"),
+        ["dict"] = ("#EEEDFE", "#3C3489"),
+        ["hwmon"] = ("#FBEAF0", "#72243E"),
+        ["tools"] = ("#F1EFE8", "#444441"),
     };
 
     public CatalogItem Model { get; }
@@ -79,8 +89,14 @@ public sealed class AppItemViewModel : ObservableObject
     {
         try
         {
+            // Bundled icon first; else a previously downloaded icon-cache entry.
             var path = Path.Combine(repoRoot, "assets", "icons", Model.Id + ".png");
-            if (!File.Exists(path)) return;
+            if (!File.Exists(path))
+            {
+                var cache = Services.IconCache.PathFor(Model.Id);
+                if (!File.Exists(cache)) return;   // keep the letter fallback
+                path = cache;
+            }
             var bmp = new BitmapImage();
             bmp.BeginInit();
             bmp.CacheOption = BitmapCacheOption.OnLoad;          // don't lock the file
@@ -88,12 +104,24 @@ public sealed class AppItemViewModel : ObservableObject
             bmp.UriSource = new Uri(path);
             bmp.EndInit();
             bmp.Freeze();
-            IconImage = bmp;
-            OnPropertyChanged(nameof(IconImage));
-            OnPropertyChanged(nameof(HasIcon));
-            OnPropertyChanged(nameof(ShowLetter));
+            SetIcon(bmp);
         }
         catch { /* keep the letter fallback */ }
+    }
+
+    /// <summary>After a background icon-cache fetch, adopt the newly cached icon if we still have none.</summary>
+    public void ReloadFromCache()
+    {
+        if (IconImage != null) return;
+        if (Services.IconCache.Load(Model.Id) is { } img) SetIcon(img);
+    }
+
+    private void SetIcon(ImageSource img)
+    {
+        IconImage = img;
+        OnPropertyChanged(nameof(IconImage));
+        OnPropertyChanged(nameof(HasIcon));
+        OnPropertyChanged(nameof(ShowLetter));
     }
 
     /// <summary>Override the icon with the app's real icon extracted from its installed .exe.</summary>

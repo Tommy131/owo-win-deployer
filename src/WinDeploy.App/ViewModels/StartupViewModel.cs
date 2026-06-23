@@ -92,7 +92,7 @@ public sealed class StartupViewModel : ObservableObject
         try
         {
             var livePath = running.ResolvePath(e.ExePath, e.Name);
-            if (livePath != null && IconExtractor.FromExe(livePath) is { } procIcon) return procIcon;
+            if (livePath != null && IconExtractor.FromExeAnyIcon(livePath) is { } procIcon) return procIcon;
         }
         catch { /* letter fallback */ }
         return null;

@@ -20,6 +20,7 @@ public sealed class PhysDiskRowViewModel
     public string Detail { get; init; } = "";
     public string Health { get; init; } = "";
     public bool Healthy { get; init; }
+    public string? DeviceId { get; init; }
 }
 
 /// <summary>The "系统概览" page: a one-glance health board — OS, CPU, RAM, drives (+ SMART), battery,
@@ -30,11 +31,17 @@ public sealed class SystemOverviewViewModel : ObservableObject
     public ObservableCollection<PhysDiskRowViewModel> PhysicalDisks { get; } = new();
     public RelayCommand RefreshCommand { get; }
     public RelayCommand ExportInventoryCommand { get; }
+    public RelayCommand ShowSmartCommand { get; }
 
     public SystemOverviewViewModel()
     {
         RefreshCommand = new RelayCommand(_ => _ = LoadAsync());
         ExportInventoryCommand = new RelayCommand(_ => _ = ExportInventoryAsync());
+        ShowSmartCommand = new RelayCommand(p =>
+        {
+            if (p is PhysDiskRowViewModel r)
+                new Views.SmartDialog(r.Name, r.DeviceId) { Owner = System.Windows.Application.Current.MainWindow }.ShowDialog();
+        });
         _ = LoadAsync();
     }
 
@@ -93,6 +100,7 @@ public sealed class SystemOverviewViewModel : ObservableObject
                 Detail = $"{p.Media} · {p.SizeGb} GB",
                 Health = string.IsNullOrWhiteSpace(p.Health) ? "未知" : p.Health,
                 Healthy = string.Equals(p.Health, "Healthy", StringComparison.OrdinalIgnoreCase),
+                DeviceId = p.DeviceId,
             });
 
         IsLoading = false;

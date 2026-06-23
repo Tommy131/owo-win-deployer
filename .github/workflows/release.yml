@@ -1,7 +1,12 @@
 name: release
 
-# 推送 v* tag 自动触发：构建自包含单文件 → 打包完整发行包 → 创建 GitHub Release 并上传。
+# 推送 v* tag 自动触发：构建三种形态 → 各自打包完整发行包 → 创建 GitHub Release 并上传。
 # 也可在 Actions 页手动触发（仅产出构建工件，不发布 Release）。
+#
+# 三种构建版本（均自带 catalog/ configs/ assets/ 数据链）：
+#   1) with-runtime —— 集成 .NET 运行环境版：自包含、多文件，目标机免装 .NET。
+#   2) framework    —— 纯 App 版：依赖框架，体积最小，需目标机安装 .NET 10 桌面运行时。
+#   3) singlefile   —— 单文件版：自包含、单个 WinDeploy.exe，目标机免装 .NET。
 on:
   push:
     tags: ['v*']
@@ -24,18 +29,27 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Publish GUI (self-contained single file — used for both the ZIP and bootstrap direct download)
-        run: >
-          dotnet publish src/WinDeploy.App/WinDeploy.App.csproj
-          -c Release -r win-x64 --self-contained true
-          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
-          -p:DebugType=none --nologo -o dist/app
+      - name: Publish all variants (集成运行环境 / 纯App / 单文件)
+        shell: pwsh
+        run: |
+          $variants = @(
+            @{ Key = 'with-runtime'; Sc = 'true';  Single = 'false' },
+            @{ Key = 'framework';    Sc = 'false'; Single = 'false' },
+            @{ Key = 'singlefile';   Sc = 'true';  Single = 'true'  }
+          )
+          foreach ($v in $variants) {
+            $pubArgs = @('-c', 'Release', '-r', 'win-x64', '--self-contained', $v.Sc,
+                         "-p:PublishSingleFile=$($v.Single)", '-p:DebugType=none', '--nologo')
+            if ($v.Single -eq 'true') { $pubArgs += '-p:IncludeNativeLibrariesForSelfExtract=true' }
 
-      - name: Publish CLI (self-contained single file)
-        run: >
-          dotnet publish src/WinDeploy.Cli/WinDeploy.Cli.csproj
-          -c Release -r win-x64 --self-contained true
-          -p:PublishSingleFile=true -p:DebugType=none --nologo -o dist/cli
+            Write-Host "== publish [$($v.Key)] GUI =="
+            dotnet publish src/WinDeploy.App/WinDeploy.App.csproj @pubArgs -o "dist/$($v.Key)/app"
+            if ($LASTEXITCODE -ne 0) { throw "GUI publish failed: $($v.Key)" }
+
+            Write-Host "== publish [$($v.Key)] CLI =="
+            dotnet publish src/WinDeploy.Cli/WinDeploy.Cli.csproj @pubArgs -o "dist/$($v.Key)/cli"
+            if ($LASTEXITCODE -ne 0) { throw "CLI publish failed: $($v.Key)" }
+          }
 
       - name: Code sign binaries (only runs if a signing certificate secret is configured)
         if: ${{ env.SIGN_PFX_BASE64 != '' }}
@@ -46,38 +60,61 @@ jobs:
           $signtool = Get-ChildItem 'C:/Program Files (x86)/Windows Kits/10/bin' -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue |
                       Where-Object { $_.FullName -like '*x64*' } | Sort-Object FullName | Select-Object -Last 1
           if (-not $signtool) { throw 'signtool.exe not found on runner' }
+          # Sign every variant's GUI + CLI executable before packaging.
+          $files = Get-ChildItem dist -Recurse -File |
+                   Where-Object { $_.Name -in @('WinDeploy.exe', 'windeploy.exe') } |
+                   Select-Object -ExpandProperty FullName
           & $signtool.FullName sign /f $pfx /p $env:SIGN_PFX_PASSWORD /fd SHA256 `
-            /tr http://timestamp.digicert.com /td SHA256 `
-            dist/app/WinDeploy.exe dist/cli/windeploy.exe
+            /tr http://timestamp.digicert.com /td SHA256 @files
           Remove-Item $pfx -Force
 
-      - name: Assemble release package
-        id: pkg
+      - name: Assemble release packages (one ZIP per variant)
         shell: pwsh
         run: |
-          $tag  = '${{ github.ref_name }}'
-          $name = "OwO-Win-Deployer-$tag-win-x64"
-          $stage = "dist/$name"
-          New-Item -ItemType Directory -Force -Path "$stage/assets" | Out-Null
-          # GUI 用单文件版（运行库已并入 exe，发行目录只有一个 exe + 数据目录，整洁）
-          Copy-Item dist/app/WinDeploy.exe "$stage/WinDeploy.exe" -Force
-          # CLI 改名，避免 Windows 大小写不敏感与 WinDeploy.exe 同名冲突
-          Copy-Item dist/cli/windeploy.exe "$stage/windeploy-cli.exe" -Force
-          # 运行所需数据放在 exe 同级（程序向上查找 catalog/，再据此定位 repoRoot/assets）
-          Copy-Item catalog      "$stage/catalog"      -Recurse -Force
-          Copy-Item assets/icons "$stage/assets/icons" -Recurse -Force
-          Copy-Item configs      "$stage/configs"      -Recurse -Force
-          Copy-Item LICENSE      "$stage/LICENSE"      -Force
-          Copy-Item README.md    "$stage/README.md"    -Force
-          # 打包整个目录（含顶层文件夹），解压后得到一个干净的子目录而非一地散文件
-          Compress-Archive -Path "$stage" -DestinationPath "dist/$name.zip" -Force
-          "zip=dist/$name.zip" >> $env:GITHUB_OUTPUT
+          $tag = '${{ github.ref_name }}'
+          if ([string]::IsNullOrWhiteSpace($tag)) { $tag = 'dev' }
+          $variants = @(
+            @{ Key = 'with-runtime'; Single = $false },
+            @{ Key = 'framework';    Single = $false },
+            @{ Key = 'singlefile';   Single = $true  }
+          )
+          foreach ($v in $variants) {
+            $appOut = "dist/$($v.Key)/app"
+            $cliOut = "dist/$($v.Key)/cli"
+            $name   = "OwO-Win-Deployer-$tag-win-x64-$($v.Key)"
+            $stage  = "dist/$name"
+            New-Item -ItemType Directory -Force -Path "$stage/assets" | Out-Null
 
-      - name: Upload build artifact
+            if ($v.Single) {
+              # 单文件：仅一个 exe（运行库已并入）+ CLI 单文件
+              Copy-Item "$appOut/WinDeploy.exe"  "$stage/WinDeploy.exe"     -Force
+              Copy-Item "$cliOut/windeploy.exe"  "$stage/windeploy-cli.exe" -Force
+            } else {
+              # 多文件：GUI 全量输出放根目录；CLI 放 cli/ 子目录（两者运行库 DLL 集不同，分目录避免冲突）
+              Copy-Item "$appOut/*" "$stage/" -Recurse -Force
+              New-Item -ItemType Directory -Force -Path "$stage/cli" | Out-Null
+              Copy-Item "$cliOut/*" "$stage/cli/" -Recurse -Force
+            }
+
+            # 运行所需数据放在 exe 同级（程序向上查找 catalog/，再据此定位 repoRoot/assets）
+            Copy-Item catalog      "$stage/catalog"      -Recurse -Force
+            Copy-Item assets/icons "$stage/assets/icons" -Recurse -Force
+            Copy-Item configs      "$stage/configs"      -Recurse -Force
+            Copy-Item LICENSE      "$stage/LICENSE"      -Force
+            Copy-Item README.md    "$stage/README.md"    -Force
+
+            Compress-Archive -Path "$stage" -DestinationPath "dist/$name.zip" -Force
+            Write-Host "packaged: dist/$name.zip"
+          }
+
+          # 供裸机引导 bootstrap.ps1 直链下载的单文件 GUI
+          Copy-Item "dist/singlefile/app/WinDeploy.exe" "dist/WinDeploy.exe" -Force
+
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: OwO-Win-Deployer-win-x64
-          path: ${{ steps.pkg.outputs.zip }}
+          path: dist/*.zip
 
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
@@ -86,16 +123,19 @@ jobs:
           name: OwO! Win Deployer ${{ github.ref_name }}
           generate_release_notes: true
           files: |
-            ${{ steps.pkg.outputs.zip }}
-            dist/app/WinDeploy.exe
+            dist/*.zip
+            dist/WinDeploy.exe
           body: |
             ## OwO! Win Deployer ${{ github.ref_name }}
 
-            一键在任意 Windows 设备上复刻开发环境、应用与个人配置。
+            一键在任意 Windows 设备上复刻开发环境、应用与个人配置。三种发行形态任选，均自带 `catalog/ configs/ assets/` 数据：
 
-            **下载（推荐用 ZIP）**
-            - `OwO-Win-Deployer-${{ github.ref_name }}-win-x64.zip` —— **推荐**。完整发行包，解压得到一个干净目录：单文件 `WinDeploy.exe`（自包含免装 .NET）+ `windeploy-cli.exe` + `catalog/ configs/ assets/`。
-            - `WinDeploy.exe` —— 仅 GUI 单文件，供裸机引导 `bootstrap.ps1` 直链下载；未签名时可能被 SmartScreen/Defender 提示「未知发布者」。
+            | 下载 | 说明 | 免装 .NET | 体积 |
+            |---|---|:--:|:--:|
+            | `…-win-x64-singlefile.zip` | **单文件版（推荐）**：解压后一个 `WinDeploy.exe` + 数据目录 | ✅ | 中 |
+            | `…-win-x64-with-runtime.zip` | **集成运行环境版**：多文件、自带 .NET 运行库，杀软启发式误报更低 | ✅ | 大 |
+            | `…-win-x64-framework.zip` | **纯 App 版**：体积最小，**需先装 [.NET 10 桌面运行时](https://dotnet.microsoft.com/download/dotnet/10.0)** | ❌ | 小 |
+            | `WinDeploy.exe` | 仅 GUI 单文件，供 `bootstrap.ps1` 直链下载 | ✅ | 中 |
 
             > ⚠️ 程序未做代码签名时，Windows 可能提示「未知发布者」或被 Defender 拦截 —— 这属于无签名安装类软件的正常现象，可点「更多信息 → 仍要运行」，或参见 README 的「被拦截怎么办」。彻底解决需 Authenticode 代码签名（仓库已内置签名流水线，配置证书后自动生效）。
             >
