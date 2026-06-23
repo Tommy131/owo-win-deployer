@@ -32,6 +32,10 @@ public static class Proc
             try { p.Kill(entireProcessTree: true); } catch { /* already gone */ }
             throw;
         }
+        // WaitForExitAsync returns on process exit, but the async OutputDataReceived/ErrorDataReceived events
+        // may still be in flight — a fast process that dumps its output then exits (e.g. smartctl) can otherwise
+        // be read back EMPTY. The parameterless WaitForExit() blocks until those handlers have flushed.
+        p.WaitForExit();
         return new ProcResult(p.ExitCode, so.ToString(), se.ToString());
     }
 
