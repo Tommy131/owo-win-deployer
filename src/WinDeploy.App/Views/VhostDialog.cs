@@ -29,6 +29,7 @@ public sealed class VhostDialog : Window
         Background = Brush("PageBg");
 
         _port = Tb("80");
+        WinDeploy.App.Behaviors.InputFilter.SetMode(_port, "portlist");   // digits + separators only
 
         var root = new StackPanel { Margin = new Thickness(20) };
         root.Children.Add(Label("域名 / server_name"));

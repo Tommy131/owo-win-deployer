@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using WinDeploy.App.Behaviors;
 using WinDeploy.App.Services.Ftp;
 
 namespace WinDeploy.App.Views;
@@ -34,6 +35,7 @@ public sealed class FtpUserDialog : Window
         _name = Tb(existing?.Name ?? "");
         _home = Tb(existing?.Home ?? "");
         _maxConn = Tb((existing?.MaxConnections ?? 0).ToString());
+        InputFilter.SetMode(_maxConn, "digits");   // per-user connection cap: digits only
 
         _group.Items.Add("（无）");
         foreach (var g in groups) _group.Items.Add(g);

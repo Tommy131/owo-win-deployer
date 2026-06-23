@@ -435,12 +435,37 @@ internal sealed class FtpSession
             case ListFormat.Mlsd:
                 var type = isDir ? "dir" : "file";
                 var sz = isDir ? "" : $"size={size};";
-                return $"type={type};{sz}modify={mtime.ToUniversalTime():yyyyMMddHHmmss}; {fi.Name}\r\n";
+                return $"type={type};{sz}perm={PermFact(isDir)};modify={mtime.ToUniversalTime():yyyyMMddHHmmss}; {fi.Name}\r\n";
             default: // Unix ls -l
                 var perm = isDir ? "drwxr-xr-x" : "-rw-r--r--";
                 var date = FormatLsDate(mtime);
                 return $"{perm} 1 owner group {size,12} {date} {fi.Name}\r\n";
         }
+    }
+
+    /// <summary>The MLSD <c>perm</c> fact (RFC 3659) for an entry, derived from the user's effective
+    /// permissions, so clients can pre-disable actions they aren't allowed to perform.</summary>
+    private string PermFact(bool isDir)
+    {
+        var sb = new StringBuilder();
+        if (isDir)
+        {
+            if (Has(FtpPerm.List)) { sb.Append('e'); sb.Append('l'); }   // enter + list
+            if (Has(FtpPerm.Upload)) sb.Append('c');                      // create files within
+            if (Has(FtpPerm.CreateDir)) sb.Append('m');                   // make subdir
+            if (Has(FtpPerm.Delete)) sb.Append('p');                      // purge files within
+            if (Has(FtpPerm.DeleteDir)) sb.Append('d');                   // delete this dir
+            if (Has(FtpPerm.Rename)) sb.Append('f');                      // rename this dir
+        }
+        else
+        {
+            if (Has(FtpPerm.Download)) sb.Append('r');                    // retrieve
+            if (Has(FtpPerm.Upload)) sb.Append('w');                      // (over)write
+            if (Has(FtpPerm.Append)) sb.Append('a');                      // append
+            if (Has(FtpPerm.Delete)) sb.Append('d');                      // delete
+            if (Has(FtpPerm.Rename)) sb.Append('f');                      // rename
+        }
+        return sb.ToString();
     }
 
     private async Task HandleMlstAsync(string arg)

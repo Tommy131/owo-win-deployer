@@ -9,7 +9,7 @@ using System.Text;
 namespace WinDeploy.App.Services.Ftp;
 
 /// <summary>One remote directory entry parsed from MLSD / LIST.</summary>
-public sealed record FtpRemoteEntry(string Name, bool IsDir, long Size, DateTime? Modified);
+public sealed record FtpRemoteEntry(string Name, bool IsDir, long Size, DateTime? Modified, string Perm = "");
 
 /// <summary>A minimal, zero-dependency FTP / FTPS client used by the 客户端 tab to browse a remote server and
 /// transfer files. Supports plain FTP, explicit FTPS (AUTH TLS) and implicit FTPS, passive data transfers,
@@ -175,15 +175,16 @@ public sealed class FtpClient : IDisposable
     // ── directory (recursive) transfers ─────────────────────────────────────────
     /// <summary>Recursively download remote directory <paramref name="remoteName"/> (under the current dir)
     /// into <paramref name="localParent"/>/&lt;remoteName&gt;. The working directory is restored afterwards.
-    /// <paramref name="progress"/> reports each file name as its transfer starts.</summary>
-    public async Task DownloadDirectoryAsync(string remoteName, string localParent, IProgress<string>? progress, CancellationToken ct)
+    /// <paramref name="onFile"/> reports each file name as its transfer starts; <paramref name="bytes"/>
+    /// reports the delta bytes of each chunk (for overall speed/progress).</summary>
+    public async Task DownloadDirectoryAsync(string remoteName, string localParent, IProgress<string>? onFile, IProgress<long>? bytes, CancellationToken ct)
     {
         var start = CurrentDir;
-        try { await DownloadDirRecAsync(remoteName, localParent, progress, ct); }
+        try { await DownloadDirRecAsync(remoteName, localParent, onFile, bytes, ct); }
         finally { try { await ChangeDirAsync(start, ct); } catch { } }
     }
 
-    private async Task DownloadDirRecAsync(string remoteName, string localParent, IProgress<string>? progress, CancellationToken ct)
+    private async Task DownloadDirRecAsync(string remoteName, string localParent, IProgress<string>? onFile, IProgress<long>? bytes, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         var localDir = Path.Combine(localParent, SafeLocal(remoteName));
@@ -193,35 +194,79 @@ public sealed class FtpClient : IDisposable
         foreach (var e in entries)
         {
             ct.ThrowIfCancellationRequested();
-            if (e.IsDir) await DownloadDirRecAsync(e.Name, localDir, progress, ct);
-            else { progress?.Report(e.Name); await DownloadAsync(e.Name, Path.Combine(localDir, SafeLocal(e.Name)), null, ct); }
+            if (e.IsDir) await DownloadDirRecAsync(e.Name, localDir, onFile, bytes, ct);
+            else { onFile?.Report(e.Name); await DownloadAsync(e.Name, Path.Combine(localDir, SafeLocal(e.Name)), bytes, ct); }
         }
         await ChangeDirAsync("..", ct);
     }
 
     /// <summary>Recursively upload local directory <paramref name="localDir"/> into a remote directory named
     /// <paramref name="remoteName"/> (created under the current dir). The working directory is restored after.</summary>
-    public async Task UploadDirectoryAsync(string localDir, string remoteName, IProgress<string>? progress, CancellationToken ct)
+    public async Task UploadDirectoryAsync(string localDir, string remoteName, IProgress<string>? onFile, IProgress<long>? bytes, CancellationToken ct)
     {
         var start = CurrentDir;
-        try { await UploadDirRecAsync(localDir, remoteName, progress, ct); }
+        try { await UploadDirRecAsync(localDir, remoteName, onFile, bytes, ct); }
         finally { try { await ChangeDirAsync(start, ct); } catch { } }
     }
 
-    private async Task UploadDirRecAsync(string localDir, string remoteName, IProgress<string>? progress, CancellationToken ct)
+    private async Task UploadDirRecAsync(string localDir, string remoteName, IProgress<string>? onFile, IProgress<long>? bytes, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         try { await MakeDirAsync(remoteName, ct); } catch { /* may already exist */ }
         await ChangeDirAsync(remoteName, ct);
         foreach (var sub in Directory.GetDirectories(localDir))
-            await UploadDirRecAsync(sub, Path.GetFileName(sub), progress, ct);
+            await UploadDirRecAsync(sub, Path.GetFileName(sub), onFile, bytes, ct);
         foreach (var file in Directory.GetFiles(localDir))
         {
             ct.ThrowIfCancellationRequested();
-            progress?.Report(Path.GetFileName(file));
-            await UploadAsync(file, Path.GetFileName(file), null, ct);
+            onFile?.Report(Path.GetFileName(file));
+            await UploadAsync(file, Path.GetFileName(file), bytes, ct);
         }
         await ChangeDirAsync("..", ct);
+    }
+
+    /// <summary>Sum the byte size of a remote directory tree (recursive), restoring the working directory.
+    /// Used to compute the ETA total before a folder download.</summary>
+    public async Task<long> RemoteDirSizeAsync(string remoteName, CancellationToken ct)
+    {
+        var start = CurrentDir;
+        try { return await RemoteDirSizeRecAsync(remoteName, ct); }
+        finally { try { await ChangeDirAsync(start, ct); } catch { } }
+    }
+
+    private async Task<long> RemoteDirSizeRecAsync(string remoteName, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await ChangeDirAsync(remoteName, ct);
+        long sum = 0;
+        foreach (var e in await ListAsync(ct))
+            sum += e.IsDir ? await RemoteDirSizeRecAsync(e.Name, ct) : e.Size;
+        await ChangeDirAsync("..", ct);
+        return sum;
+    }
+
+    /// <summary>Recursively delete a remote directory and everything inside it (files + nested folders).
+    /// FTP's RMD only removes empty directories, so contents are cleared first. Restores the working dir.</summary>
+    public async Task DeleteDirectoryAsync(string remoteName, CancellationToken ct)
+    {
+        var start = CurrentDir;
+        try { await DeleteDirRecAsync(remoteName, ct); }
+        finally { try { await ChangeDirAsync(start, ct); } catch { } }
+    }
+
+    private async Task DeleteDirRecAsync(string remoteName, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        await ChangeDirAsync(remoteName, ct);
+        var entries = await ListAsync(ct);
+        foreach (var e in entries)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (e.IsDir) await DeleteDirRecAsync(e.Name, ct);
+            else await DeleteAsync(e.Name, ct);
+        }
+        await ChangeDirAsync("..", ct);          // back to the parent before removing the now-empty dir
+        await RemoveDirAsync(remoteName, ct);
     }
 
     /// <summary>Make a remote name safe to use as a local file/dir name.</summary>
@@ -231,16 +276,16 @@ public sealed class FtpClient : IDisposable
         return name.Trim();
     }
 
+    /// <summary>Copy <paramref name="from"/> → <paramref name="to"/>, reporting the DELTA bytes of each chunk
+    /// (not a cumulative total) so callers can aggregate overall progress across many files.</summary>
     private static async Task PumpAsync(Stream from, Stream to, IProgress<long>? progress, CancellationToken ct)
     {
         var buf = new byte[81920];
-        long total = 0;
         int n;
         while ((n = await from.ReadAsync(buf, ct)) > 0)
         {
             await to.WriteAsync(buf.AsMemory(0, n), ct);
-            total += n;
-            progress?.Report(total);
+            progress?.Report(n);
         }
         await to.FlushAsync(ct);
     }
@@ -328,7 +373,7 @@ public sealed class FtpClient : IDisposable
             if (sp < 0) continue;
             var facts = l[..sp];
             var name = l[(sp + 1)..];
-            string type = "file"; long size = 0; DateTime? mod = null;
+            string type = "file"; long size = 0; DateTime? mod = null; string perm = "";
             foreach (var f in facts.Split(';', StringSplitOptions.RemoveEmptyEntries))
             {
                 var eq = f.IndexOf('=');
@@ -337,11 +382,12 @@ public sealed class FtpClient : IDisposable
                 var v = f[(eq + 1)..];
                 if (k == "type") type = v.ToLowerInvariant();
                 else if (k == "size") long.TryParse(v, out size);
+                else if (k == "perm") perm = v.ToLowerInvariant();
                 else if (k == "modify" && DateTime.TryParseExact(v, "yyyyMMddHHmmss", CultureInfo.InvariantCulture,
                              DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dt)) mod = dt.ToLocalTime();
             }
             if (type is "cdir" or "pdir" || name is "." or "..") continue;
-            list.Add(new FtpRemoteEntry(name, type == "dir", size, mod));
+            list.Add(new FtpRemoteEntry(name, type == "dir", size, mod, perm));
         }
         return Sort(list);
     }

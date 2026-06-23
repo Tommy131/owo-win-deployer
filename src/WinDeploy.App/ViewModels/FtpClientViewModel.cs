@@ -16,6 +16,14 @@ public sealed class FtpRemoteRowVm
     public string TypeText => Model.IsDir ? "文件夹" : "文件";
     public string SizeText => Model.IsDir ? "" : Human(Model.Size);
     public string ModifiedText => Model.Modified?.ToString("yyyy-MM-dd HH:mm") ?? "";
+
+    // Per-entry permission gating from the MLSD `perm` fact. When the server reports no perm (empty),
+    // assume allowed — a generic FTP server may not advertise perms and we shouldn't false-disable.
+    private bool HasPerm(char c) => Model.Perm.Length == 0 || Model.Perm.IndexOf(c) >= 0;
+    public bool CanDownload => Model.IsDir ? (HasPerm('e') || HasPerm('l')) : HasPerm('r');
+    public bool CanRename => HasPerm('f');
+    public bool CanDelete => HasPerm('d');
+
     internal static string Human(long b) => b >= 1024L * 1024 * 1024 ? $"{b / 1024.0 / 1024 / 1024:0.0} GB"
         : b >= 1024 * 1024 ? $"{b / 1024.0 / 1024:0.0} MB" : b >= 1024 ? $"{b / 1024.0:0.0} KB" : $"{b} B";
 }
@@ -57,15 +65,24 @@ public sealed class FtpClientViewModel : ObservableObject
         RefreshRemoteCommand = new RelayCommand(_ => _ = ListRemoteAsync(), _ => Connected && !Busy);
         RemoteUpCommand = new RelayCommand(_ => _ = RemoteUpAsync(), _ => Connected && !Busy);
         OpenRemoteCommand = new RelayCommand(p => { if (p is FtpRemoteRowVm r) _ = OpenRemoteAsync(r); });
-        DownloadCommand = new RelayCommand(_ => _ = DownloadAsync(), _ => Connected && !Busy && SelectedRemote != null);
-        UploadCommand = new RelayCommand(_ => _ = UploadAsync(), _ => Connected && !Busy && SelectedLocal is { IsUp: false });
-        DeleteRemoteCommand = new RelayCommand(_ => _ = DeleteRemoteAsync(), _ => Connected && !Busy && SelectedRemote != null);
+        DownloadCommand = new RelayCommand(_ => _ = DownloadAsync(), _ => Connected && !Busy &&
+            (_selRemotes.Count > 0 ? _selRemotes.All(r => r.CanDownload) : SelectedRemote is { CanDownload: true }));
+        UploadCommand = new RelayCommand(_ => _ = UploadAsync(), _ => Connected && !Busy && (_selLocals.Count > 0 || SelectedLocal is { IsUp: false }));
+        DeleteRemoteCommand = new RelayCommand(_ => _ = DeleteRemoteAsync(), _ => Connected && !Busy && SelectedRemote is { CanDelete: true });
         MkdirRemoteCommand = new RelayCommand(_ => _ = MkdirRemoteAsync(), _ => Connected && !Busy);
-        RenameRemoteCommand = new RelayCommand(_ => _ = RenameRemoteAsync(), _ => Connected && !Busy && SelectedRemote != null);
+        RenameRemoteCommand = new RelayCommand(_ => _ = RenameRemoteAsync(), _ => Connected && !Busy && SelectedRemote is { CanRename: true });
+        OpenRemoteItemCommand = new RelayCommand(_ => _ = OpenRemoteItemAsync(), _ => Connected && !Busy && SelectedRemote is { CanDownload: true });
 
         OpenLocalCommand = new RelayCommand(p => { if (p is FtpLocalRowVm r) OpenLocal(r); });
+        OpenLocalItemCommand = new RelayCommand(_ => OpenLocalItem(), _ => SelectedLocal is { IsUp: false });
+        RenameLocalCommand = new RelayCommand(_ => RenameLocal(), _ => !Busy && SelectedLocal is { IsUp: false });
+        DeleteLocalCommand = new RelayCommand(_ => DeleteLocal(), _ => !Busy && SelectedLocal is { IsUp: false });
         LocalUpCommand = new RelayCommand(_ => LocalUp());
         PickLocalCommand = new RelayCommand(_ => PickLocal());
+
+        SaveProfileCommand = new RelayCommand(_ => SaveProfile());
+        DeleteProfileCommand = new RelayCommand(_ => DeleteProfile(), _ => SelectedProfile != null);
+        LoadProfiles();
         ListLocal();
     }
 
@@ -99,6 +116,13 @@ public sealed class FtpClientViewModel : ObservableObject
     private string _logText = "";
     public string LogText { get => _logText; private set => Set(ref _logText, value); }
 
+    // ── transfer progress (speed / ETA) ────────────────────────────────────────
+    private bool _transferring; public bool Transferring { get => _transferring; private set => Set(ref _transferring, value); }
+    private double _progressValue; public double ProgressValue { get => _progressValue; private set => Set(ref _progressValue, value); }
+    private string _transferTitle = ""; public string TransferTitle { get => _transferTitle; private set => Set(ref _transferTitle, value); }
+    private string _speedText = "—"; public string SpeedText { get => _speedText; private set => Set(ref _speedText, value); }
+    private string _etaText = "—"; public string EtaText { get => _etaText; private set => Set(ref _etaText, value); }
+
     // ── remote / local listings ──────────────────────────────────────────────
     public ObservableCollection<FtpRemoteRowVm> RemoteEntries { get; } = new();
     public ObservableCollection<FtpLocalRowVm> LocalEntries { get; } = new();
@@ -110,6 +134,12 @@ public sealed class FtpClientViewModel : ObservableObject
     public FtpRemoteRowVm? SelectedRemote { get => _selectedRemote; set { if (Set(ref _selectedRemote, value)) Requery(); } }
     private FtpLocalRowVm? _selectedLocal;
     public FtpLocalRowVm? SelectedLocal { get => _selectedLocal; set { if (Set(ref _selectedLocal, value)) Requery(); } }
+
+    // Multi-selection for batch transfer; kept in sync by the view's SelectionChanged handlers.
+    private IReadOnlyList<FtpRemoteRowVm> _selRemotes = Array.Empty<FtpRemoteRowVm>();
+    private IReadOnlyList<FtpLocalRowVm> _selLocals = Array.Empty<FtpLocalRowVm>();
+    public void SetRemoteSelection(System.Collections.IList items) { _selRemotes = items.OfType<FtpRemoteRowVm>().ToList(); Requery(); }
+    public void SetLocalSelection(System.Collections.IList items) { _selLocals = items.OfType<FtpLocalRowVm>().Where(x => !x.IsUp).ToList(); Requery(); }
 
     public RelayCommand ConnectCommand { get; }
     public RelayCommand DisconnectCommand { get; }
@@ -124,6 +154,26 @@ public sealed class FtpClientViewModel : ObservableObject
     public RelayCommand OpenLocalCommand { get; }
     public RelayCommand LocalUpCommand { get; }
     public RelayCommand PickLocalCommand { get; }
+    public RelayCommand OpenRemoteItemCommand { get; }
+    public RelayCommand OpenLocalItemCommand { get; }
+    public RelayCommand RenameLocalCommand { get; }
+    public RelayCommand DeleteLocalCommand { get; }
+    public RelayCommand SaveProfileCommand { get; }
+    public RelayCommand DeleteProfileCommand { get; }
+
+    // ── saved credentials (site manager) ───────────────────────────────────────
+    public ObservableCollection<FtpClientProfile> Profiles { get; } = new();
+    public bool HasProfiles => Profiles.Count > 0;
+
+    private FtpClientProfile? _selectedProfile;
+    public FtpClientProfile? SelectedProfile
+    {
+        get => _selectedProfile;
+        set { if (Set(ref _selectedProfile, value)) { Requery(); if (value != null) ApplyProfile(value); } }
+    }
+
+    /// <summary>Raised when a saved profile is applied, so the view can push the password into its PasswordBox.</summary>
+    public event Action<string>? PasswordFilled;
 
     // ── connection ───────────────────────────────────────────────────────────
     private async Task ConnectAsync()
@@ -215,71 +265,147 @@ public sealed class FtpClientViewModel : ObservableObject
         await ListRemoteAsync();
     }
 
-    // ── transfers ────────────────────────────────────────────────────────────
+    // ── transfers (batch, with speed / ETA) ────────────────────────────────────
     private async Task DownloadAsync()
     {
-        if (_client == null || SelectedRemote is not { } r) return;
+        if (_client == null) return;
+        var items = BatchRemote();
+        if (items.Count == 0) return;
         Busy = true;
+        var counter = NewCounter();
+        var onFile = new Progress<string>(name => TransferTitle = $"下载 {items.Count} 项 · {name}");
         try
         {
-            if (r.IsDir)
+            long total = 0;   // pre-scan sizes for an accurate ETA (folders summed recursively)
+            foreach (var r in items) total += r.IsDir ? await _client.RemoteDirSizeAsync(r.Name, _cts!.Token) : r.Model.Size;
+            BeginTransfer($"下载 {items.Count} 项", total);
+            foreach (var r in items)
             {
-                var n = 0;
-                var p = new Progress<string>(name => { n++; Note = $"下载文件夹 {r.Name} … 第 {n} 个：{name}"; });
-                await _client.DownloadDirectoryAsync(r.Name, LocalDir, p, _cts!.Token);
-                AuditLog.Action($"FTP 下载文件夹 {r.Name} → {LocalDir}（{n} 个文件）");
-                Note = $"已下载文件夹 {r.Name}（{n} 个文件）→ {LocalDir}";
+                _cts!.Token.ThrowIfCancellationRequested();
+                if (r.IsDir) await _client.DownloadDirectoryAsync(r.Name, LocalDir, onFile, counter, _cts.Token);
+                else { TransferTitle = $"下载 · {r.Name}"; await _client.DownloadAsync(r.Name, Path.Combine(LocalDir, r.Name), counter, _cts.Token); }
             }
-            else
-            {
-                var local = Path.Combine(LocalDir, r.Name);
-                var p = new Progress<long>(b => Note = $"下载 {r.Name} … {FtpRemoteRowVm.Human(b)}");
-                await _client.DownloadAsync(r.Name, local, p, _cts!.Token);
-                AuditLog.Action($"FTP 下载 {r.Name} → {local}");
-                Note = $"已下载 {r.Name} → {LocalDir}";
-            }
+            AuditLog.Action($"FTP 下载 {items.Count} 项 → {LocalDir}");
+            Note = $"已下载 {items.Count} 项 → {LocalDir}";
             ListLocal();
         }
+        catch (OperationCanceledException) { Note = "下载已取消。"; }
         catch (Exception ex) { Note = "下载失败：" + ex.Message; }
-        finally { Busy = false; }
+        finally { EndTransfer(); Busy = false; }
     }
 
     private async Task UploadAsync()
     {
-        if (_client == null || SelectedLocal is not { IsUp: false } l) return;
+        if (_client == null) return;
+        var items = BatchLocal();
+        if (items.Count == 0) return;
         Busy = true;
+        var counter = NewCounter();
+        var onFile = new Progress<string>(name => TransferTitle = $"上传 {items.Count} 项 · {name}");
         try
         {
-            if (l.IsDir)
+            long total = 0;
+            foreach (var l in items) total += LocalSize(l);
+            BeginTransfer($"上传 {items.Count} 项", total);
+            foreach (var l in items)
             {
-                var n = 0;
-                var p = new Progress<string>(name => { n++; Note = $"上传文件夹 {l.Name} … 第 {n} 个：{name}"; });
-                await _client.UploadDirectoryAsync(l.Path, l.Name, p, _cts!.Token);
-                AuditLog.Action($"FTP 上传文件夹 {l.Path} → {RemoteDir}/{l.Name}（{n} 个文件）");
-                Note = $"已上传文件夹 {l.Name}（{n} 个文件）→ {RemoteDir}";
+                _cts!.Token.ThrowIfCancellationRequested();
+                if (l.IsDir) await _client.UploadDirectoryAsync(l.Path, l.Name, onFile, counter, _cts.Token);
+                else { TransferTitle = $"上传 · {l.Name}"; await _client.UploadAsync(l.Path, l.Name, counter, _cts.Token); }
             }
-            else
-            {
-                var p = new Progress<long>(b => Note = $"上传 {l.Name} … {FtpRemoteRowVm.Human(b)}");
-                await _client.UploadAsync(l.Path, l.Name, p, _cts!.Token);
-                AuditLog.Action($"FTP 上传 {l.Path} → {RemoteDir}/{l.Name}");
-                Note = $"已上传 {l.Name} → {RemoteDir}";
-            }
+            AuditLog.Action($"FTP 上传 {items.Count} 项 → {RemoteDir}");
+            Note = $"已上传 {items.Count} 项 → {RemoteDir}";
             await ListRemoteAsync();
         }
+        catch (OperationCanceledException) { Note = "上传已取消。"; }
         catch (Exception ex) { Note = "上传失败：" + ex.Message; }
-        finally { Busy = false; }
+        finally { EndTransfer(); Busy = false; }
+    }
+
+    // The right-clicked single row (Grid_RightSelect selects exactly one) or the multi-selection.
+    private List<FtpRemoteRowVm> BatchRemote()
+        => _selRemotes.Count > 0 ? _selRemotes.ToList()
+         : SelectedRemote != null ? new List<FtpRemoteRowVm> { SelectedRemote } : new();
+
+    private List<FtpLocalRowVm> BatchLocal()
+        => _selLocals.Count > 0 ? _selLocals.ToList()
+         : SelectedLocal is { IsUp: false } s ? new List<FtpLocalRowVm> { s } : new();
+
+    private static long LocalSize(FtpLocalRowVm l)
+    {
+        try { return l.IsDir ? Directory.EnumerateFiles(l.Path, "*", SearchOption.AllDirectories).Sum(f => new FileInfo(f).Length) : l.Size; }
+        catch { return l.Size; }
+    }
+
+    // ── transfer progress engine (speed / ETA sampled on a timer) ───────────────
+    private sealed class ByteCounter : IProgress<long>
+    {
+        private long _total;
+        public long Total => Interlocked.Read(ref _total);
+        public void Report(long delta) => Interlocked.Add(ref _total, delta);   // called from the transfer thread
+    }
+
+    private ByteCounter? _counter;
+    private long _xferTotal, _lastBytes, _lastMs;
+    private readonly System.Diagnostics.Stopwatch _xferSw = System.Diagnostics.Stopwatch.StartNew();
+    private System.Windows.Threading.DispatcherTimer? _xferTimer;
+
+    private ByteCounter NewCounter() { var c = new ByteCounter(); _counter = c; return c; }
+
+    private void BeginTransfer(string title, long total)
+    {
+        _xferTotal = total; _lastBytes = 0; _lastMs = _xferSw.ElapsedMilliseconds;
+        TransferTitle = title; SpeedText = "—"; EtaText = total > 0 ? "计算中…" : "—"; ProgressValue = 0;
+        Transferring = true;
+        _xferTimer ??= new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+        _xferTimer.Tick -= OnXferTick; _xferTimer.Tick += OnXferTick; _xferTimer.Start();
+    }
+
+    private void EndTransfer()
+    {
+        _xferTimer?.Stop();
+        if (_counter is { } c && _xferTotal > 0) ProgressValue = Math.Min(100, c.Total * 100.0 / _xferTotal);
+        Transferring = false;
+        _counter = null;
+    }
+
+    private void OnXferTick(object? s, EventArgs e)
+    {
+        var done = _counter?.Total ?? 0;
+        var nowMs = _xferSw.ElapsedMilliseconds;
+        var dt = (nowMs - _lastMs) / 1000.0;
+        if (dt <= 0) return;
+        var speed = Math.Max(0, (done - _lastBytes) / dt);   // bytes/sec over the last interval
+        SpeedText = HumanSpeed(speed);
+        if (_xferTotal > 0)
+        {
+            ProgressValue = Math.Min(100, done * 100.0 / _xferTotal);
+            EtaText = speed > 1 ? HumanTime((_xferTotal - done) / speed) : "计算中…";
+        }
+        _lastBytes = done; _lastMs = nowMs;
+    }
+
+    private static string HumanSpeed(double bps)
+        => bps >= 1024 * 1024 ? $"{bps / 1024 / 1024:0.0} MB/s" : bps >= 1024 ? $"{bps / 1024:0.0} KB/s" : $"{bps:0} B/s";
+
+    private static string HumanTime(double sec)
+    {
+        if (double.IsNaN(sec) || double.IsInfinity(sec) || sec < 0) return "—";
+        if (sec < 1) return "约 1 秒";
+        if (sec < 60) return $"约 {(int)Math.Round(sec)} 秒";
+        if (sec < 3600) return $"约 {(int)(sec / 60)} 分 {(int)(sec % 60)} 秒";
+        return $"约 {(int)(sec / 3600)} 小时 {(int)(sec % 3600 / 60)} 分";
     }
 
     private async Task DeleteRemoteAsync()
     {
         if (_client == null || SelectedRemote is not { } r) return;
-        if (MessageBox.Show($"删除远端 {(r.IsDir ? "目录" : "文件")} {r.Name}？", "删除",
+        if (MessageBox.Show($"删除远端 {(r.IsDir ? "目录" : "文件")} {r.Name}？" + (r.IsDir ? "\n（含其中所有内容，递归删除，不可恢复）" : ""), "删除",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         Busy = true;
         try
         {
-            if (r.IsDir) await _client.RemoveDirAsync(r.Name, _cts!.Token);
+            if (r.IsDir) await _client.DeleteDirectoryAsync(r.Name, _cts!.Token);   // recursive: clears contents then RMD
             else await _client.DeleteAsync(r.Name, _cts!.Token);
             AuditLog.Action($"FTP 删除远端 {r.Name}");
             Note = $"已删除 {r.Name}";
@@ -345,6 +471,124 @@ public sealed class FtpClientViewModel : ObservableObject
     {
         var d = new Microsoft.Win32.OpenFolderDialog { Title = "选择本地目录", InitialDirectory = LocalDir };
         if (d.ShowDialog() == true) { LocalDir = d.FolderName; ListLocal(); }
+    }
+
+    // ── saved credentials ──────────────────────────────────────────────────────
+    private void LoadProfiles()
+    {
+        Profiles.Clear();
+        foreach (var p in FtpClientStore.Load()) Profiles.Add(p);
+        OnPropertyChanged(nameof(HasProfiles));
+    }
+
+    /// <summary>Fill the connection form from a saved profile (decrypting its password) so the user can just
+    /// click 连接.</summary>
+    private void ApplyProfile(FtpClientProfile p)
+    {
+        Host = p.Host;
+        _tlsMode = string.IsNullOrEmpty(p.TlsMode) ? "explicit" : p.TlsMode;
+        OnPropertyChanged(nameof(IsTlsNone)); OnPropertyChanged(nameof(IsTlsExplicit)); OnPropertyChanged(nameof(IsTlsImplicit));
+        Port = p.Port;
+        UserName = p.UserName;
+        Password = Dpapi.Unprotect(p.PasswordEnc);
+        PasswordFilled?.Invoke(Password);
+        Note = $"已载入凭据「{p.Name}」，点击「连接」登录。";
+    }
+
+    private void SaveProfile()
+    {
+        if (string.IsNullOrWhiteSpace(Host)) { Note = "请先填写主机后再保存凭据。"; return; }
+        var def = SelectedProfile?.Name ?? $"{(string.IsNullOrEmpty(UserName) ? "anonymous" : UserName)}@{Host}:{Port}";
+        var dlg = new Views.InputDialog("保存凭据", "为该登录起个名字（同名将覆盖）：", def, def) { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true || dlg.Value.Length == 0) return;
+        var name = dlg.Value;
+        var prof = Profiles.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        var isNew = prof == null;
+        prof ??= new FtpClientProfile();
+        prof.Name = name;
+        prof.Host = Host.Trim();
+        prof.Port = Port;
+        prof.TlsMode = _tlsMode;
+        prof.UserName = UserName;
+        prof.PasswordEnc = Dpapi.Protect(Password);
+        if (isNew) Profiles.Add(prof);
+        FtpClientStore.Save(Profiles);
+        _selectedProfile = prof; OnPropertyChanged(nameof(SelectedProfile));
+        OnPropertyChanged(nameof(HasProfiles));
+        Requery();
+        AuditLog.Action($"FTP 凭据保存：{name}");
+        Note = $"已保存凭据「{name}」（密码以当前 Windows 账户加密存储）。";
+    }
+
+    private void DeleteProfile()
+    {
+        if (SelectedProfile is not { } p) return;
+        if (MessageBox.Show($"删除已保存凭据「{p.Name}」？", "删除凭据", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        Profiles.Remove(p);
+        _selectedProfile = null; OnPropertyChanged(nameof(SelectedProfile));
+        OnPropertyChanged(nameof(HasProfiles));
+        Requery();
+        FtpClientStore.Save(Profiles);
+        AuditLog.Action($"FTP 凭据删除：{p.Name}");
+        Note = $"已删除凭据「{p.Name}」。";
+    }
+
+    // ── context-menu actions (local & remote, file or folder) ──────────────────
+    /// <summary>Open a local file with its associated app, or a local folder in Explorer.</summary>
+    private void OpenLocalItem()
+    {
+        if (SelectedLocal is not { IsUp: false } l) return;
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(l.Path) { UseShellExecute = true }); }
+        catch (Exception ex) { Note = "打开失败：" + ex.Message; }
+    }
+
+    private void RenameLocal()
+    {
+        if (SelectedLocal is not { IsUp: false } l) return;
+        var dlg = new Views.InputDialog("重命名", $"将 {l.Name} 重命名为：", l.Name, l.Name) { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true || dlg.Value.Length == 0 || dlg.Value == l.Name) return;
+        try
+        {
+            var dest = Path.Combine(Path.GetDirectoryName(l.Path)!, dlg.Value);
+            if (l.IsDir) Directory.Move(l.Path, dest); else File.Move(l.Path, dest);
+            Note = $"已重命名为 {dlg.Value}";
+            ListLocal();
+        }
+        catch (Exception ex) { Note = "重命名失败：" + ex.Message; }
+    }
+
+    private void DeleteLocal()
+    {
+        if (SelectedLocal is not { IsUp: false } l) return;
+        if (MessageBox.Show($"删除本地{(l.IsDir ? "文件夹" : "文件")} {l.Name}？" + (l.IsDir ? "\n（含其中所有内容，不可恢复）" : ""),
+                "删除", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        try
+        {
+            if (l.IsDir) Directory.Delete(l.Path, true); else File.Delete(l.Path);
+            Note = $"已删除 {l.Name}";
+            ListLocal();
+        }
+        catch (Exception ex) { Note = "删除失败：" + ex.Message; }
+    }
+
+    /// <summary>Open a remote folder (enter it) or a remote file (download to temp, then open locally).</summary>
+    private async Task OpenRemoteItemAsync()
+    {
+        if (_client == null || SelectedRemote is not { } r) return;
+        if (r.IsDir) { await OpenRemoteAsync(r); return; }
+        Busy = true;
+        try
+        {
+            var dir = Path.Combine(Path.GetTempPath(), "WinDeployFtp");
+            Directory.CreateDirectory(dir);
+            var tmp = Path.Combine(dir, r.Name);
+            Note = $"正在下载并打开 {r.Name} …";
+            await _client.DownloadAsync(r.Name, tmp, null, _cts!.Token);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(tmp) { UseShellExecute = true });
+            Note = $"已下载并用关联程序打开 {r.Name}";
+        }
+        catch (Exception ex) { Note = "打开失败：" + ex.Message; }
+        finally { Busy = false; }
     }
 
     private void AppendLog(string line)

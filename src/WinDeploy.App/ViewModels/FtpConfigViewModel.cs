@@ -31,7 +31,7 @@ public sealed class FtpUserRow : ObservableObject
     public FtpUser Model { get; }
     public FtpUserRow(FtpUser m) { Model = m; }
     public string Name => Model.Name;
-    public string Group => string.IsNullOrEmpty(Model.Group) ? "（无）" : Model.Group!;
+    public string Group => string.IsNullOrEmpty(Model.Group) ? "" : "组 " + Model.Group;
     public string Home => Model.Home;
     public bool Enabled => Model.Enabled;
     public string PermText => Model.UseGroupPermissions && !string.IsNullOrEmpty(Model.Group)
