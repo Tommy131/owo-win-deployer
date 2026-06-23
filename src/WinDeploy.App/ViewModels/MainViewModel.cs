@@ -154,6 +154,37 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    // ── tray: cached web-server runtime status (probed async, read synchronously by the tray menu) ──
+    private readonly object _webStatusLock = new();
+    private Dictionary<string, (bool Running, string Detail)> _webStatus = new(StringComparer.OrdinalIgnoreCase);
+    private long _lastWebProbe;
+
+    /// <summary>Last probed runtime status of a web server (by id) for the tray's status line; null if unprobed.</summary>
+    public (bool Running, string Detail)? WebServiceStatus(string id)
+    {
+        lock (_webStatusLock) return _webStatus.TryGetValue(id, out var v) ? v : null;
+    }
+
+    /// <summary>Probe each installed web server's runtime status (async — Tomcat via CIM) into a cache the tray
+    /// menu reads synchronously. Throttled so repeated menu opens don't spawn probes back-to-back.</summary>
+    public async Task RefreshWebServiceStatusAsync(bool force = false)
+    {
+        var now = Environment.TickCount64;
+        if (!force && now - _lastWebProbe < 1500) return;
+        _lastWebProbe = now;
+        var map = new Dictionary<string, (bool, string)>(StringComparer.OrdinalIgnoreCase);
+        foreach (var s in InstalledWebServices())
+        {
+            try
+            {
+                var rt = await Services.ServerManager.GetRuntimeAsync(s);
+                map[s.Id] = (rt.Running, rt.Running ? $"运行中 · PID {rt.PidText}" : "已停止");
+            }
+            catch { map[s.Id] = (false, "未知"); }
+        }
+        lock (_webStatusLock) _webStatus = map;
+    }
+
     /// <summary>Build the grouped, collapsible nav. Items flagged Advanced only show in 开发人员模式;
     /// items with a MinBuild only show on a high-enough Windows build. Built once; visibility toggled live.</summary>
     private void BuildNav()

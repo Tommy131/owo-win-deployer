@@ -228,15 +228,15 @@
           </Grid.ColumnDefinitions>
           <StackPanel Grid.Column="0" Margin="0,0,14,0" VerticalAlignment="Center">
             <TextBlock Text="{Binding TransferTitle}" FontSize="12.5" Foreground="{DynamicResource TextPrimary}" TextTrimming="CharacterEllipsis" />
-            <ProgressBar Height="6" Minimum="0" Maximum="100" Value="{Binding ProgressValue}" Margin="0,6,0,0"
+            <ProgressBar Height="6" Minimum="0" Maximum="100" Value="{Binding ProgressValue, Mode=OneWay}" Margin="0,6,0,0"
                          Foreground="{DynamicResource Accent}" Background="{DynamicResource BorderSoft}" BorderThickness="0" />
           </StackPanel>
           <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
             <TextBlock FontSize="12.5" HorizontalAlignment="Right" Foreground="{DynamicResource Accent}">
-              <Run Text="速度 " /><Run Text="{Binding SpeedText}" FontWeight="SemiBold" />
+              <Run Text="速度 " /><Run Text="{Binding SpeedText, Mode=OneWay}" FontWeight="SemiBold" />
             </TextBlock>
             <TextBlock FontSize="12" HorizontalAlignment="Right" Margin="0,2,0,0" Foreground="{DynamicResource TextSecondary}">
-              <Run Text="剩余 " /><Run Text="{Binding EtaText}" />
+              <Run Text="剩余 " /><Run Text="{Binding EtaText, Mode=OneWay}" />
             </TextBlock>
           </StackPanel>
         </Grid>

@@ -53,6 +53,8 @@ public partial class MainWindow : Window
         _tray ??= new TrayIcon(WinDeploy.App.AppInfo.TitleWithVersion, RestoreFromTray, ExitFromTray, BuildTrayMenu);
         _tray.Show();
         Hide();
+        // Prime the web-server status cache so the first tray right-click already shows live状态.
+        if (DataContext is MainViewModel vm) _ = vm.RefreshWebServiceStatusAsync(force: true);
         AuditLog.App("已最小化到后台常驻（系统托盘）");
     }
 
@@ -125,13 +127,25 @@ public partial class MainWindow : Window
         foreach (var s in services)
         {
             var captured = s;
-            var actions = new List<TrayMenuItem>();
-            if (s.CanStart) actions.Add(TrayMenuItem.Item("启动", () => vm.RunWebServiceAction(captured, SvcAction.Start)));
-            if (s.CanRestart) actions.Add(TrayMenuItem.Item("重启", () => vm.RunWebServiceAction(captured, SvcAction.Restart)));
-            if (s.CanStop) actions.Add(TrayMenuItem.Item("停止", () => vm.RunWebServiceAction(captured, SvcAction.Stop)));
-            if (actions.Count == 0) actions.Add(TrayMenuItem.Disabled("（无可用操作）"));
-            subs.Add(TrayMenuItem.Sub(s.Name, actions));
+            var st = vm.WebServiceStatus(s.Id);
+            var known = st != null;
+            var running = st?.Running ?? false;
+
+            // Status first (like the FTP menu), then the gated actions.
+            var actions = new List<TrayMenuItem>
+            {
+                TrayMenuItem.Disabled("状态：" + (known ? st!.Value.Detail : "检测中…")),
+                TrayMenuItem.Sep,
+            };
+            if (s.CanStart) actions.Add(TrayMenuItem.Item("启动", () => vm.RunWebServiceAction(captured, SvcAction.Start), enabled: !known || !running));
+            if (s.CanRestart) actions.Add(TrayMenuItem.Item("重启", () => vm.RunWebServiceAction(captured, SvcAction.Restart), enabled: !known || running));
+            if (s.CanStop) actions.Add(TrayMenuItem.Item("停止", () => vm.RunWebServiceAction(captured, SvcAction.Stop), enabled: !known || running));
+
+            var suffix = known ? (running ? "（运行中）" : "（已停止）") : "（检测中…）";
+            subs.Add(TrayMenuItem.Sub(s.Name + suffix, actions));
         }
+        // Refresh the cache so the next open reflects current state (throttled inside).
+        _ = vm.RefreshWebServiceStatusAsync();
         return TrayMenuItem.Sub("管理 Web 服务", subs);
     }
 
@@ -148,7 +162,7 @@ public partial class MainWindow : Window
             TrayMenuItem.Item("重启", srv.RestartServer, enabled: running),
             TrayMenuItem.Item("停止", srv.StopServer, enabled: running),
         };
-        return TrayMenuItem.Sub("管理 FTP 服务", children);
+        return TrayMenuItem.Sub("管理 FTP 服务" + (running ? "（运行中）" : "（已停止）"), children);
     }
 
     /// <summary>Open the Windows system-level Environment Variables editor directly.</summary>

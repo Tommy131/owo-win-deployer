@@ -77,7 +77,7 @@
                       </Border>
                     </StackPanel>
                     <TextBlock FontSize="11.5" Foreground="{DynamicResource TextSecondary}" Margin="0,4,0,0">
-                      <Run Text="{Binding State}" /><Run Text="  ·  " /><Run Text="{Binding Version}" />
+                      <Run Text="{Binding State, Mode=OneWay}" /><Run Text="  ·  " /><Run Text="{Binding Version, Mode=OneWay}" />
                     </TextBlock>
                   </StackPanel>
                   <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
