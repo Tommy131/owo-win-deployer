@@ -111,6 +111,7 @@ public sealed class SmartDialog : Window
             _body.Children.Add(Banner("⚠ 检测到高危项（重映射 / 待映射 / 无法纠正扇区 > 0），建议尽快备份数据。"));
 
         if (s.Attributes.Count > 0) _body.Children.Add(AttributeTable(s));
+        else if (s.IsNvme && s.HasCounters) _body.Children.Add(NvmeAttributeTable(s));
 
         if (!s.HasCounters)
         {
@@ -172,6 +173,55 @@ public sealed class SmartDialog : Window
                 a.Threshold > 0 ? a.Threshold.ToString() : "—", a.Raw.ToString(), header: false, critical: a.Critical));
 
         return new Border { Child = outer };
+    }
+
+    /// <summary>The NVMe equivalent of the ATA attribute table: a detailed dump of the NVMe SMART/Health log
+    /// (log page 0x02). NVMe has no normalized current/worst/threshold model, so it's a 字段 / 值 table.</summary>
+    private Border NvmeAttributeTable(SmartInfo s)
+    {
+        var outer = new StackPanel { Margin = new Thickness(0, 12, 0, 0) };
+        outer.Children.Add(new TextBlock { Text = "SMART 属性（NVMe Health Log · 0x02）", FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = Brush("TextPrimary"), Margin = new Thickness(0, 0, 0, 6) });
+        outer.Children.Add(NvmeRow("字段", "值", header: true, danger: false));
+        foreach (var (name, value, danger) in NvmeRows(s))
+            outer.Children.Add(NvmeRow(name, value, header: false, danger: danger));
+        return new Border { Child = outer };
+    }
+
+    private Grid NvmeRow(string name, string value, bool header, bool danger)
+    {
+        var g = new Grid { Margin = new Thickness(0, 2, 0, 2) };
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(176) });
+        g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        var fg = header ? Brush("TextTertiary") : danger ? Brush("FailFg") : Brush("TextPrimary");
+        var fs = header ? 11.0 : 12.0;
+        var fw = danger ? FontWeights.SemiBold : FontWeights.Normal;
+        g.Children.Add(Col(new TextBlock { Text = name, FontSize = fs, Foreground = fg, FontWeight = fw, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center }, 0));
+        g.Children.Add(Col(new TextBlock { Text = value, FontSize = fs, Foreground = fg, FontWeight = fw, FontFamily = header ? SystemFonts.MessageFontFamily : new FontFamily("Consolas"), TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center }, 1));
+        return g;
+    }
+
+    private IEnumerable<(string Name, string Value, bool Danger)> NvmeRows(SmartInfo s)
+    {
+        var rows = new List<(string, string, bool)>();
+        void Add(string name, string? value, bool danger = false) { if (!string.IsNullOrEmpty(value)) rows.Add((name, value!, danger)); }
+
+        Add("严重警告", s.CriticalWarning is int cw ? $"0x{cw:X2} · {NvmeWarn(cw)}" : null, (s.CriticalWarning ?? 0) != 0);
+        Add("复合温度", s.Temperature is int t ? $"{t} °C" : null);
+        Add("可用备件", s.AvailableSpare is int sp ? $"{sp}%" : null, s.AvailableSpareThreshold is int t0 && t0 > 0 && (s.AvailableSpare ?? 100) < t0);
+        Add("可用备件阈值", s.AvailableSpareThreshold is int th ? $"{th}%" : null);
+        Add("已用寿命", s.PercentageUsed is int pu ? $"{pu}%" : null, (s.PercentageUsed ?? 0) >= 90);
+        Add("剩余寿命", s.RemainingLifePercent is int life ? $"{life}%" : null, (s.RemainingLifePercent ?? 100) <= 10);
+        Add("数据写入量", s.HostWritesBytes is long hw ? Gb(hw) : null);
+        Add("数据读取量", s.HostReadsBytes is long hr ? Gb(hr) : null);
+        Add("主机写入命令数", s.HostWriteCommands?.ToString("N0"));
+        Add("主机读取命令数", s.HostReadCommands?.ToString("N0"));
+        Add("控制器繁忙时间", s.ControllerBusyMinutes is long cb ? $"{cb:N0} 分钟" : null);
+        Add("通电周期", s.PowerCycles?.ToString("N0"));
+        Add("通电时间", s.PowerOnHours is long poh ? $"{poh:N0} 小时" : null);
+        Add("不安全关机", s.UnsafeShutdowns?.ToString("N0"));
+        Add("介质与完整性错误", s.MediaErrors?.ToString("N0"), (s.MediaErrors ?? 0) > 0);
+        Add("错误信息日志条目数", s.ErrorLogEntries?.ToString("N0"));
+        return rows;
     }
 
     private Grid MakeRow(string id, string name, string cur, string worst, string thr, string raw, bool header, bool critical)

@@ -47,6 +47,9 @@ public sealed class SmartInfo
     public long? MediaErrors { get; set; }            // media & data-integrity errors
     public long? UnsafeShutdowns { get; set; }
     public long? ErrorLogEntries { get; set; }
+    public long? HostReadCommands { get; set; }
+    public long? HostWriteCommands { get; set; }
+    public long? ControllerBusyMinutes { get; set; }
 
     public List<SmartAttr> Attributes { get; } = new();
 
@@ -231,6 +234,9 @@ public static class SystemInfo
         info.MediaErrors = nv.MediaErrors;
         info.UnsafeShutdowns = nv.UnsafeShutdowns;
         info.ErrorLogEntries = nv.ErrorLogEntries;
+        info.HostReadCommands = nv.HostReadCommands;
+        info.HostWriteCommands = nv.HostWriteCommands;
+        info.ControllerBusyMinutes = nv.ControllerBusyMinutes;
         info.HasCounters = true;
     }
 
