@@ -316,31 +316,264 @@ windeploy <命令> [选项]
 
 ## 软件目录 Catalog
 
-`catalog/catalog.json` 包含 **450+ 条目**，按类别分组：
+`catalog/catalog.json` 包含 **142 个软件条目**，覆盖 15 个类别。标注 `★` 的条目在 `dev` / `full` 预设中默认选中。
 
-| 类别 | 典型软件 |
-|---|---|
-| `dev` | git · gh · Node.js · Python · Miniconda · PowerShell · JDK · Go · .NET SDK · CMake · FFmpeg · MinGW · Flutter |
-| `system` | VC++ Runtime · Windows Terminal · 火绒安全 |
-| `ide` | VS Code（含 80 个扩展）· Visual Studio · Android Studio · Sublime Merge |
-| `ai` | ComfyUI · LM Studio · Ollama · llama.cpp · Claude · Windsurf · Hermes Agent · Codex |
-| `office` | 微信 · Discord · WhatsApp · 企业微信 · 飞书 · 腾讯会议 |
-| `media` | OBS · VLC · IrfanView · 网易云音乐 |
-| `db-api` | DBGate · Apifox · WinSCP |
-| `vm` | VMware |
-| `games` | Steam · Epic Games |
-| `proxy` | V2RayN · CC Switch |
-| `browser` | Chrome |
-| `hwmon` | HWiNFO · CPU-Z · GPU-Z · CrystalDiskMark · FurMark · MSI Afterburner · CrystalDiskInfo |
-| `tools` | Snipaste · ScreenToGif · 7-Zip · PowerToys · Everything · ShareX · Typora · uTools |
+### 安装方式分布
+
+| 方式 | 说明 | 数量 |
+|---|---|:---:|
+| `winget` | Windows 包管理器（自动静默） | 94 |
+| `manual` | 官网手动下载（无自动安装源） | 11 |
+| `portable` | 下载 ZIP 自动解压 + 加入 PATH | 9 |
+| `github-release` | 从 GitHub Release 自动选版下载 | 6 |
+| `winget-bundle` | 批量 winget（多个 ID） | 1 |
+| `vscode-ext` | VS Code 扩展批量安装 | 1 |
+| `git` | git clone + 加入 PATH | 1 |
+| `exe` | 直接下载安装包运行 | 1 |
+| `local` | 预置本地安装包 | 1 |
+
+### 完整软件列表
+
+<details>
+<summary><b>🛠 dev — 开发工具链（23 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| ★ git | Git | 分布式版本控制 | winget |
+| ★ gh | GitHub CLI | GitHub 命令行工具 | winget |
+| ★ nodejs | Node.js 24 | JavaScript 运行时 | winget |
+| ★ python | Python 3.10 | Python 解释器 | winget |
+| ★ miniconda | Miniconda3 | Python 环境与包管理 | winget |
+| pwsh | PowerShell 7 | 跨平台 PowerShell（同步 $PROFILE 配置） | winget |
+| ★ jdk17 | Oracle JDK 17 | Java 开发套件 | winget |
+| ★ go | Go | Go 语言工具链 | winget |
+| ★ dotnet-sdk | .NET SDK 10 | .NET 软件开发工具包 | winget |
+| ★ cmake | CMake | 跨平台构建系统 | winget |
+| ★ ffmpeg | FFmpeg | 音视频处理工具 | winget |
+| ★ pandoc | Pandoc | 文档格式转换 | winget |
+| mingw | MinGW-w64 (WinLibs) | GCC/G++ 工具链（自动选版下载） | portable |
+| mingw-builds | MinGW-builds (niXman) | GCC/G++ 工具链 niXman 构建（需 7-Zip） | portable |
+| flutter | Flutter + Dart | 跨平台 UI SDK（移动开发） | git |
+| docker-desktop | Docker Desktop | 容器开发环境 | winget |
+| rust | Rust | Rust 工具链 (rustup) | winget |
+| php | PHP | PHP 解释器（多版本，自动设置 PHP_HOME） | portable |
+| lua | Lua | Lua 解释器（自动设置 LUA_HOME） | winget |
+
+> ★ = dev / full 预设默认选中
+</details>
+
+<details>
+<summary><b>⚙️ system — 系统基础（3 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| ★ vcredist | VC++ 运行库合集 | Visual C++ 运行库 2010–2015+ | winget-bundle |
+| ★ windows-terminal | Windows Terminal | 现代终端（同步 settings.json） | winget |
+| huorong | 火绒安全 | 安全 / 杀毒软件（官网手动下载） | manual |
+</details>
+
+<details>
+<summary><b>💻 ide — 编辑器 & IDE（10 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| ★ vscode | VS Code | 轻量代码编辑器 | winget |
+| ★ vscode-ext | VS Code 扩展 | 批量安装约 80 个扩展 | vscode-ext |
+| cursor | Cursor | AI 代码编辑器 | winget |
+| visual-studio | Visual Studio 2022 | 重型 C++/.NET IDE（社区版） | winget |
+| vs2026 | Visual Studio 2026 | 重型 C++/.NET IDE（预览版） | winget |
+| android-studio | Android Studio | Android 开发 IDE | winget |
+| arduino | Arduino IDE | Arduino 开发环境 | winget |
+| unity-hub | Unity Hub | Unity 游戏引擎管理器 | winget |
+| sublime-merge | Sublime Merge | Git 图形客户端 | winget |
+| sublime-text | Sublime Text | 文本 / 代码编辑器 | winget |
+</details>
+
+<details>
+<summary><b>🤖 ai — AI 工具（10 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| comfyui | ComfyUI Desktop | AI 绘画工作流 | winget |
+| lmstudio | LM Studio | 本地大模型运行（含 GUI） | winget |
+| ollama | Ollama | 本地大模型运行 | winget |
+| llama-cpp | llama.cpp | C++ 大模型推理引擎（llama-cli / llama-server） | winget |
+| claude | Claude | Anthropic Claude AI 助手桌面端 | winget |
+| windsurf | Windsurf | AI 代码编辑器 | winget |
+| hermes-agent | Hermes Agent | Nous Research AI 智能体桌面端 | exe |
+| codex | Codex CLI | OpenAI Codex 命令行编码助手 | winget |
+| codex-app | Codex (GUI) | OpenAI Codex 图形界面（官网手动下载） | manual |
+| ima-copilot | ima.copilot | 腾讯 ima 智能工作台（官网手动下载） | manual |
+</details>
+
+<details>
+<summary><b>💬 office — 办公 & 通讯（14 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| wechat | 微信 | 即时通讯 | winget |
+| qq | QQ | 腾讯 QQ 即时通讯 | winget |
+| tim | TIM | QQ 办公简洁版 | winget |
+| discord | Discord | 语音 / 文字社群 | winget |
+| telegram | Telegram | 即时通讯 | winget |
+| whatsapp | WhatsApp | 即时通讯 | winget |
+| zoom | Zoom | 视频会议 | winget |
+| wecom | 企业微信 | 企业通讯协作 | winget |
+| feishu | 飞书 | 协作办公（字节跳动） | winget |
+| tencent-meeting | 腾讯会议 | 视频会议 | winget |
+| dingtalk | 钉钉 | 阿里钉钉 办公协作 | winget |
+| wps | WPS Office | 金山办公套件（文字 / 表格 / 演示） | winget |
+| foxmail | Foxmail | 邮件客户端 | winget |
+</details>
+
+<details>
+<summary><b>🎬 media — 媒体 & 娱乐（13 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| obs | OBS Studio | 录屏 / 直播 | winget |
+| vlc | VLC | 多媒体播放器 | winget |
+| potplayer | PotPlayer | 多媒体播放器 | winget |
+| irfanview | IrfanView | 轻量看图工具 | winget |
+| handbrake | HandBrake | 视频转码 | winget |
+| netease-music | 网易云音乐 | 音乐播放 | winget |
+| qq-music | QQ音乐 | 音乐播放 | winget |
+| foobar2000 | foobar2000 | 轻量音频播放器 | winget |
+| spotify | Spotify | 流媒体音乐 | winget |
+| itunes | iTunes | 苹果媒体管理 | winget |
+| bilibili | 哔哩哔哩 | B 站桌面端 | winget |
+| douyin | 抖音 | 短视频桌面版 | winget |
+</details>
+
+<details>
+<summary><b>🗄 db-api — 数据库 & API（8 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| dbgate | DbGate | 通用数据库客户端 | winget |
+| dbeaver | DBeaver | 通用数据库客户端（含 ER 图） | winget |
+| heidisql | HeidiSQL | MySQL / MariaDB 客户端 | winget |
+| redis-insight | Redis Insight | Redis 可视化客户端 | winget |
+| mongodb-compass | MongoDB Compass | MongoDB 图形客户端 | winget |
+| apifox | Apifox | API 设计 / 调试 / Mock | winget |
+| postman | Postman | API 调试 | winget |
+| winscp | WinSCP | SFTP / SCP / FTP 客户端 | winget |
+</details>
+
+<details>
+<summary><b>🌐 server — 服务器组件（3 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| nginx | nginx | 高性能 Web 服务器 / 反向代理（便携版） | portable |
+| apache | Apache HTTP Server | Apache 2.4 Web 服务器（Apache Lounge Win64 构建） | portable |
+| tomcat | Apache Tomcat 10 | Java Servlet 容器（便携版，自动设置 CATALINA_HOME） | portable |
+</details>
+
+<details>
+<summary><b>🖥 vm — 虚拟化（1 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| vmware | VMware Workstation | 虚拟机（有本地安装包则自动安装，否则手动） | local |
+</details>
+
+<details>
+<summary><b>🎮 games — 游戏平台（9 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| steam | Steam | Steam 游戏平台客户端 | winget |
+| epic | Epic Games | Epic 游戏平台客户端 | winget |
+| ubisoft-connect | Ubisoft Connect | 育碧游戏平台 | winget |
+| ea-app | EA app | EA 游戏平台 | winget |
+| battlenet | Battle.net | 暴雪游戏平台 | winget |
+| gog-galaxy | GOG Galaxy | GOG 游戏平台 | winget |
+| watt-toolkit | Watt Toolkit | Steam++ 游戏 / 网络加速（自动选版下载） | github-release |
+| openspeedy | OpenSpeedy | 游戏 / 程序变速工具（自动选版下载） | github-release |
+| creaminstaller | CreamInstaller | Steam/Epic DLC 解锁工具（自动选版下载） | github-release |
+</details>
+
+<details>
+<summary><b>🌍 browser — 浏览器（4 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| chrome | Google Chrome | 网页浏览器 | winget |
+| firefox | Mozilla Firefox | 网页浏览器 | winget |
+| edge | Microsoft Edge | 网页浏览器 | winget |
+| qq-browser | QQ浏览器 | 网页浏览器 | winget |
+</details>
+
+<details>
+<summary><b>🔀 proxy — 代理工具（2 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| v2rayn | v2rayN | 代理 / 科学上网客户端 | winget |
+| cc-switch | CC Switch | AI 服务本地代理 / API 渠道切换（自动选版下载） | github-release |
+</details>
+
+<details>
+<summary><b>📖 dict — 词典（1 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| de-assist | 德语助手 | 德语词典 / 学习工具 | winget |
+</details>
+
+<details>
+<summary><b>🔧 hwmon — 硬件监控 & 超频（10 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| hwinfo | HWiNFO | 硬件信息 / 传感器监控 | winget |
+| cpu-z | CPU-Z | CPU / 主板 / 内存详细信息 | winget |
+| gpu-z | GPU-Z | 显卡信息 / 传感器 | winget |
+| crystaldiskinfo | CrystalDiskInfo | 硬盘 S.M.A.R.T 健康监测 | winget |
+| crystaldiskmark | CrystalDiskMark | 磁盘读写跑分 | winget |
+| furmark | FurMark 2 | GPU 烤机 / 压力测试 | winget |
+| msi-afterburner | MSI Afterburner | 显卡超频 / 风扇 / 监控 | winget |
+| rtss | RivaTuner Statistics Server | 帧率显示 / 帧数限制 / 屏幕叠加 | winget |
+| ryzen-dram-calc | Ryzen DRAM Calculator | 锐龙内存超频时序计算器（官网手动下载） | manual |
+| ntpwedit | NTPWEdit | Windows 本地账户密码重置（自动选版下载） | github-release |
+</details>
+
+<details>
+<summary><b>🧰 tools — 实用工具（22 项）</b></summary>
+
+| ID | 名称 | 说明 | 方式 |
+|---|---|---|---|
+| snipaste | Snipaste | 截图 / 贴图工具 | winget |
+| screentogif | ScreenToGif | 录屏转 GIF | winget |
+| sharex | ShareX | 截图 / 录屏 / 文件分享 | winget |
+| 7zip | 7-Zip | 压缩 / 解压工具 | winget |
+| winrar | WinRAR | 压缩 / 解压（含 RAR 格式） | winget |
+| bandizip | Bandizip | 压缩 / 解压工具 | winget |
+| everything | Everything | 极速文件名搜索 | winget |
+| powertoys | PowerToys | 微软 Windows 实用工具集（自动选版） | github-release |
+| dism-plus | Dism++ | 系统精简 / 清理 / 维护（自动选版） | github-release |
+| notepad-plus-plus | Notepad++ | 文本 / 代码编辑器 | winget |
+| typora | Typora | Markdown 编辑器（官网手动下载） | manual |
+| utools | uTools | 效率工具箱 / 启动器（官网手动下载） | manual |
+| thunder | 迅雷 | 下载工具 | winget |
+| baidu-netdisk | 百度网盘 | 云存储 | winget |
+| aliyundrive | 阿里云盘 | 云存储 | winget |
+| anydesk | AnyDesk | 远程桌面 | winget |
+| todesk | ToDesk | 远程桌面 | winget |
+| teamviewer | TeamViewer | 远程桌面 | winget |
+| geek-uninstaller | Geek Uninstaller | 彻底卸载工具 | winget |
+| little-navmap | Little Navmap | 飞行模拟导航地图（官网手动下载） | manual |
+| m365-e5-renew | Microsoft365 E5 Renew Plus | M365 E5 开发者订阅自动续订 | manual |
+</details>
 
 ### 内置预设 Profile
 
 | 预设 | 包含 | 典型场景 |
 |---|---|---|
-| `dev` | dev + system + VS Code + Windows Terminal | 精简开发工作站 |
-| `full` | 除游戏客户端外的全部 | 全功能机器 |
-| `ai-station` | dev + system + ai + VS Code | AI 推理 / 训练工作站 |
+| `dev` | dev + system + vscode + vscode-ext + windows-terminal | 精简开发工作站 |
+| `full` | 全部条目（排除 steam / epic 等游戏客户端） | 全功能主力机器 |
+| `ai-station` | dev + system + ai + vscode + vscode-ext | AI 推理 / 训练工作站 |
 
 ### 扩展 catalog
 
@@ -366,16 +599,39 @@ windeploy <命令> [选项]
 
 ## 使用须知
 
-### 系统要求
+### 运行环境与系统要求
+
+#### 最低要求（运行 GUI / CLI）
 
 | 项目 | 要求 |
 |---|---|
-| 操作系统 | Windows 10 1809（Build 17763）及以上；终端功能需 Windows 10 1809+ |
-| 架构 | x64 |
-| 运行依赖 | 无（自包含，免装 .NET） |
-| 构建依赖 | .NET SDK 10（仅开发者需要） |
-| 网络 | 联网安装软件；离线包需提前 `download-only` |
-| 权限 | 部分功能（SFC · DISM · chkdsk · 系统级 PATH）需管理员权限，程序将按需 UAC 提权 |
+| 操作系统 | Windows 10 1809（Build 17763）及以上 |
+| 架构 | x64（仅 64 位） |
+| 运行时依赖 | **无**（自包含发布，免装 .NET 运行时） |
+| 磁盘空间 | GUI EXE ≈ 80 MB；CLI EXE ≈ 20 MB |
+
+#### 功能依赖
+
+| 功能 | 依赖 / 条件 |
+|---|---|
+| **winget 安装** | Windows 10 21H1+ 或手动安装 [App Installer](https://aka.ms/getwinget) |
+| **ConPTY 终端** | Windows 10 Build 17763+（1809 Redstone 5，自动在旧版上禁用此页） |
+| **WSL 管理** | 已启用 WSL 2（`wsl --install`），需开发人员模式 |
+| **SSH 登记到 GitHub** | 已登录 `gh` CLI（`gh auth login`） |
+| **conda 环境** | Miniconda / Anaconda 已安装并在 PATH 中 |
+| **vscode-ext 安装** | VS Code 已安装（`code` 命令可用） |
+| **SFC / DISM / chkdsk** | 管理员权限（程序按需弹出 UAC） |
+| **SMART 详情（NVMe）** | 管理员权限（调用 NVMe 驱动 IOCTL） |
+| **FTP TLS 自动证书** | 无额外依赖（程序内置 X.509 生成） |
+| **DPAPI 凭据加密** | Windows 内置，无需额外依赖 |
+
+#### 构建要求（仅开发者）
+
+| 项目 | 要求 |
+|---|---|
+| SDK | [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) |
+| IDE（可选） | Visual Studio 2022+ 或 VS Code + C# Dev Kit |
+| 发布脚本 | PowerShell 7（`pwsh`）或 Windows PowerShell 5.1 |
 
 ### 被 Windows 拦截 / 提示「未知发布者」怎么办
 
