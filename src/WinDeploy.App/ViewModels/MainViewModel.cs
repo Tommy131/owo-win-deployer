@@ -261,7 +261,13 @@ public sealed class MainViewModel : LocalizedObject
     public object? Current
     {
         get => _current;
-        set { if (Set(ref _current, value)) UpdateInstallWatch(); }
+        set
+        {
+            // DetailViewModel is created per card-click (a LocalizedObject); dispose the outgoing one so it
+            // doesn't stay rooted on the static CultureChanged event for the app's lifetime (memory leak).
+            if (_current is DetailViewModel old && !ReferenceEquals(old, value)) old.Dispose();
+            if (Set(ref _current, value)) UpdateInstallWatch();
+        }
     }
 
     /// <summary>Run a 2-second running-state scan only while the install center is the visible page,

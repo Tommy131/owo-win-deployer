@@ -19,7 +19,17 @@ public sealed class ServiceConfigViewModel : LocalizedObject
     private ServerListViewModel? _list;
 
     private object? _current;
-    public object? Current { get => _current; private set => Set(ref _current, value); }
+    public object? Current
+    {
+        get => _current;
+        // The per-open ServerDetailViewModel is a LocalizedObject; dispose it when navigating away so it stops
+        // rooting itself on the static CultureChanged event (the server list is long-lived and not disposed).
+        private set
+        {
+            if (_current is ServerDetailViewModel old && !ReferenceEquals(old, value)) old.Dispose();
+            Set(ref _current, value);
+        }
+    }
 
     public void Initialize(Catalog catalog, PathResolver resolver)
     {
