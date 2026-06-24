@@ -2,7 +2,21 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:WinDeploy.App.ViewModels"
-             xmlns:views="clr-namespace:WinDeploy.App.Views"
+             xmlns:vmd="clr-namespace:WinDeploy.App.ViewModels.Deploy"
+             xmlns:vmsys="clr-namespace:WinDeploy.App.ViewModels.Sys"
+             xmlns:vmftp="clr-namespace:WinDeploy.App.ViewModels.Ftp"
+             xmlns:vmnet="clr-namespace:WinDeploy.App.ViewModels.Net"
+             xmlns:vmterm="clr-namespace:WinDeploy.App.ViewModels.Terminal"
+             xmlns:vmtools="clr-namespace:WinDeploy.App.ViewModels.Tools"
+             xmlns:vmshell="clr-namespace:WinDeploy.App.ViewModels.Shell"
+             xmlns:vd="clr-namespace:WinDeploy.App.Views.Deploy"
+             xmlns:vsys="clr-namespace:WinDeploy.App.Views.Sys"
+             xmlns:vftp="clr-namespace:WinDeploy.App.Views.Ftp"
+             xmlns:vcf="clr-namespace:WinDeploy.App.Views.Cloudflare"
+             xmlns:vsrv="clr-namespace:WinDeploy.App.Views.Server"
+             xmlns:vterm="clr-namespace:WinDeploy.App.Views.Terminal"
+             xmlns:vtools="clr-namespace:WinDeploy.App.Views.Tools"
+             xmlns:vshell="clr-namespace:WinDeploy.App.Views.Shell"
              xmlns:app="clr-namespace:WinDeploy.App"
              xmlns:b="clr-namespace:WinDeploy.App.Behaviors"
              StartupUri="MainWindow.xaml">
@@ -557,81 +571,81 @@
         </Setter>
       </Style>
 
-      <!-- Page → View map -->
-      <DataTemplate DataType="{x:Type vm:InstallCenterViewModel}">
-        <views:InstallCenterView />
+      <!-- Page → View map (feature sub-namespaces: vmX = ViewModels.X, vX = Views.X) -->
+      <DataTemplate DataType="{x:Type vmd:InstallCenterViewModel}">
+        <vd:InstallCenterView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:ProgressViewModel}">
-        <views:ProgressView />
+      <DataTemplate DataType="{x:Type vmd:ProgressViewModel}">
+        <vd:ProgressView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:ConfigSyncViewModel}">
-        <views:ConfigSyncView />
+      <DataTemplate DataType="{x:Type vmd:ConfigSyncViewModel}">
+        <vd:ConfigSyncView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:ExportViewModel}">
-        <views:ExportView />
+      <DataTemplate DataType="{x:Type vmd:ExportViewModel}">
+        <vd:ExportView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
-        <views:SettingsView />
+      <DataTemplate DataType="{x:Type vmd:DetailViewModel}">
+        <vd:DetailView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:EnvVarsViewModel}">
-        <views:EnvVarsView />
+      <DataTemplate DataType="{x:Type vmshell:SettingsViewModel}">
+        <vshell:SettingsView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:TerminalViewModel}">
-        <views:TerminalView />
+      <DataTemplate DataType="{x:Type vmshell:LogViewModel}">
+        <vshell:LogView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:LogViewModel}">
-        <views:LogView />
+      <DataTemplate DataType="{x:Type vmsys:EnvVarsViewModel}">
+        <vsys:EnvVarsView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:ProcessManagerViewModel}">
-        <views:ProcessManagerView />
+      <DataTemplate DataType="{x:Type vmsys:ProcessManagerViewModel}">
+        <vsys:ProcessManagerView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:StartupViewModel}">
-        <views:StartupView />
+      <DataTemplate DataType="{x:Type vmsys:StartupViewModel}">
+        <vsys:StartupView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:SystemOverviewViewModel}">
-        <views:SystemOverviewView />
+      <DataTemplate DataType="{x:Type vmsys:SystemOverviewViewModel}">
+        <vsys:SystemOverviewView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:MaintenanceViewModel}">
-        <views:MaintenanceView />
+      <DataTemplate DataType="{x:Type vmsys:MaintenanceViewModel}">
+        <vsys:MaintenanceView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:WslViewModel}">
-        <views:WslView />
+      <DataTemplate DataType="{x:Type vmterm:TerminalViewModel}">
+        <vterm:TerminalView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:TweaksViewModel}">
-        <views:TweaksView />
+      <DataTemplate DataType="{x:Type vmtools:WslViewModel}">
+        <vtools:WslView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:AdvancedToolsViewModel}">
-        <views:AdvancedToolsView />
+      <DataTemplate DataType="{x:Type vmtools:TweaksViewModel}">
+        <vtools:TweaksView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:ServiceConfigViewModel}">
-        <views:ServiceConfigView />
+      <DataTemplate DataType="{x:Type vmtools:AdvancedToolsViewModel}">
+        <vtools:AdvancedToolsView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:ServerListViewModel}">
-        <views:ServerListView />
+      <DataTemplate DataType="{x:Type vmnet:ServiceConfigViewModel}">
+        <vsrv:ServiceConfigView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:ServerDetailViewModel}">
-        <views:ServerDetailView />
+      <DataTemplate DataType="{x:Type vmnet:ServerListViewModel}">
+        <vsrv:ServerListView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:FtpViewModel}">
-        <views:FtpView />
+      <DataTemplate DataType="{x:Type vmnet:ServerDetailViewModel}">
+        <vsrv:ServerDetailView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:FtpServerViewModel}">
-        <views:FtpServerView />
+      <DataTemplate DataType="{x:Type vmftp:FtpViewModel}">
+        <vftp:FtpView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:FtpConfigViewModel}">
-        <views:FtpConfigView />
+      <DataTemplate DataType="{x:Type vmftp:FtpServerViewModel}">
+        <vftp:FtpServerView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:FtpClientViewModel}">
-        <views:FtpClientView />
+      <DataTemplate DataType="{x:Type vmftp:FtpConfigViewModel}">
+        <vftp:FtpConfigView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:CloudflareDdnsViewModel}">
-        <views:CloudflareDdnsView />
+      <DataTemplate DataType="{x:Type vmftp:FtpClientViewModel}">
+        <vftp:FtpClientView />
       </DataTemplate>
-      <DataTemplate DataType="{x:Type vm:DetailViewModel}">
-        <views:DetailView />
+      <DataTemplate DataType="{x:Type vmnet:CloudflareDdnsViewModel}">
+        <vcf:CloudflareDdnsView />
       </DataTemplate>
       <DataTemplate DataType="{x:Type vm:PlaceholderViewModel}">
-        <views:PlaceholderView />
+        <vshell:PlaceholderView />
       </DataTemplate>
 
     </ResourceDictionary>

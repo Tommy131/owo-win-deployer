@@ -41,6 +41,35 @@
     <Using Remove="System.Drawing" />
   </ItemGroup>
 
+  <!-- Folder = namespace: code is organized into feature subfolders, each carrying a sub-namespace.
+       These are global-imported so existing unqualified references resolve project-wide (XAML uses
+       explicit xmlns instead). -->
+  <ItemGroup>
+    <Using Include="WinDeploy.App.Services.Sys" />
+    <Using Include="WinDeploy.App.Services.Net" />
+    <Using Include="WinDeploy.App.Services.Software" />
+    <Using Include="WinDeploy.App.Services.Terminal" />
+    <Using Include="WinDeploy.App.Services.Infra" />
+    <Using Include="WinDeploy.App.Services.Ftp" />
+    <Using Include="WinDeploy.App.ViewModels" />
+    <Using Include="WinDeploy.App.ViewModels.Deploy" />
+    <Using Include="WinDeploy.App.ViewModels.Sys" />
+    <Using Include="WinDeploy.App.ViewModels.Ftp" />
+    <Using Include="WinDeploy.App.ViewModels.Net" />
+    <Using Include="WinDeploy.App.ViewModels.Terminal" />
+    <Using Include="WinDeploy.App.ViewModels.Tools" />
+    <Using Include="WinDeploy.App.ViewModels.Shell" />
+    <Using Include="WinDeploy.App.Views.Deploy" />
+    <Using Include="WinDeploy.App.Views.Sys" />
+    <Using Include="WinDeploy.App.Views.Ftp" />
+    <Using Include="WinDeploy.App.Views.Cloudflare" />
+    <Using Include="WinDeploy.App.Views.Server" />
+    <Using Include="WinDeploy.App.Views.Terminal" />
+    <Using Include="WinDeploy.App.Views.Tools" />
+    <Using Include="WinDeploy.App.Views.Shell" />
+    <Using Include="WinDeploy.App.Views.Common" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\WinDeploy.Core\WinDeploy.Core.csproj" />
     <!-- 配置文件编辑器：行号 + 语法高亮（服务配置页） -->

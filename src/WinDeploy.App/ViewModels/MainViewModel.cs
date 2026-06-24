@@ -108,7 +108,7 @@ public sealed class MainViewModel : LocalizedObject
 
     private static bool ShowDevModeConfirmDialog()
     {
-        var dlg = new Views.DevModeConfirmDialog { Owner = Application.Current.MainWindow };
+        var dlg = new DevModeConfirmDialog { Owner = Application.Current.MainWindow };
         return dlg.ShowDialog() == true;
     }
 
@@ -142,8 +142,8 @@ public sealed class MainViewModel : LocalizedObject
     public IReadOnlyList<ServerInfo> InstalledWebServices()
     {
         if (_catalog == null) return Array.Empty<ServerInfo>();
-        // Fully qualified: `ServiceConfig` here is the page VM property, not the static service helper.
-        try { return Services.ServiceConfig.Detect(_catalog, _resolver).Where(s => s.HasService).ToList(); }
+        // Fully qualified: Services.Net.ServiceConfig is the static service helper, not the `ServiceConfig` page-VM property.
+        try { return Services.Net.ServiceConfig.Detect(_catalog, _resolver).Where(s => s.HasService).ToList(); }
         catch { return Array.Empty<ServerInfo>(); }
     }
 
@@ -153,7 +153,7 @@ public sealed class MainViewModel : LocalizedObject
         var verb = action switch { SvcAction.Start => Localizer.T("verb.svcStart"), SvcAction.Stop => Localizer.T("verb.svcStop"), SvcAction.Reload => Localizer.T("verb.svcReload"), _ => Localizer.T("verb.restart") };
         try
         {
-            var (ok, msg) = Services.ServiceConfig.Run(info, action);
+            var (ok, msg) = Services.Net.ServiceConfig.Run(info, action);
             AuditLog.Action($"托盘：{verb} {info.Name} — {(ok ? "成功" : "失败")} {msg}".TrimEnd());
             ToastService.TryShow($"{verb} {info.Name}", ok ? (string.IsNullOrWhiteSpace(msg) ? Localizer.T("ops.tray.opOk") : msg) : Localizer.Format("ops.tray.opFail", msg));
         }
@@ -187,7 +187,7 @@ public sealed class MainViewModel : LocalizedObject
         {
             try
             {
-                var rt = await Services.ServerManager.GetRuntimeAsync(s);
+                var rt = await ServerManager.GetRuntimeAsync(s);
                 map[s.Id] = (rt.Running, rt.Running ? Localizer.Format("ops.web.running", rt.PidText) : Localizer.T("ops.web.stopped"));
             }
             catch { map[s.Id] = (false, Localizer.T("ops.web.unknown")); }
@@ -435,7 +435,7 @@ public sealed class MainViewModel : LocalizedObject
     {
         var items = Install.Groups.SelectMany(g => g.Items).ToList();
         Settings.IconNote = Localizer.T("ops.icon.fetching");
-        var n = await Views.BusyDialog.RunAsync(Application.Current.MainWindow, Localizer.T("ops.icon.busyTitle"),
+        var n = await BusyDialog.RunAsync(Application.Current.MainWindow, Localizer.T("ops.icon.busyTitle"),
             Localizer.T("ops.icon.busyBody"), () => FetchIconCacheAsync(items));
         Settings.IconNote = n > 0 ? Localizer.Format("ops.icon.doneN", n) : Localizer.T("ops.icon.none");
     }
@@ -449,7 +449,7 @@ public sealed class MainViewModel : LocalizedObject
             var need = items.Where(vm => !vm.HasIcon)
                             .Select(vm => (vm.Model.Id, vm.Model.Homepage, vm.Model.Name)).ToList();
             if (need.Count == 0) return 0;
-            var n = await Services.IconCache.FetchMissingAsync(need, _repoRoot);
+            var n = await IconCache.FetchMissingAsync(need, _repoRoot);
             if (n > 0)
             {
                 await Application.Current.Dispatcher.InvokeAsync(() => { foreach (var vm in items) vm.ReloadFromCache(); });
@@ -548,7 +548,7 @@ public sealed class MainViewModel : LocalizedObject
     private async Task InstallPhpAsync(CatalogItem item)
     {
         var labels = PhpVersions.Select(v => v.Label + (IsPhpVersionInstalled(v.Version) ? Localizer.T("ops.status.installed") : "")).ToList();
-        var dlg = new Views.ChoiceDialog(Localizer.T("ops.php.pickTitle"),
+        var dlg = new ChoiceDialog(Localizer.T("ops.php.pickTitle"),
             Localizer.T("ops.php.pickBody"),
             labels, 0) { Owner = Application.Current.MainWindow };
         if (dlg.ShowDialog() != true || dlg.SelectedIndex < 0) return;
@@ -694,7 +694,7 @@ public sealed class MainViewModel : LocalizedObject
         var labels = variants.Select(v => v.Label + (v.Recommended ? Localizer.T("ops.status.recommended") : "")).ToList();
         var rec = variants.FindIndex(v => v.Recommended);
         var arch = Environment.Is64BitOperatingSystem ? Localizer.T("ops.arch.x64") : Localizer.T("ops.arch.x86");
-        var dlg = new Views.ChoiceDialog(Localizer.Format("ops.toolchain.pickTitle", title),
+        var dlg = new ChoiceDialog(Localizer.Format("ops.toolchain.pickTitle", title),
             Localizer.Format("ops.toolchain.pickBody", arch),
             labels, rec) { Owner = Application.Current.MainWindow };
         if (dlg.ShowDialog() != true || dlg.SelectedIndex < 0) return;
@@ -733,7 +733,7 @@ public sealed class MainViewModel : LocalizedObject
         var tagLabels = releases.Select(r =>
             r.Tag + (r.Prerelease ? Localizer.T("ops.gh.prerelease") : "") +
             (string.IsNullOrWhiteSpace(r.Name) || r.Name == r.Tag ? "" : "  · " + r.Name)).ToList();
-        var dlgTag = new Views.ChoiceDialog(Localizer.Format("ops.gh.pickTagTitle", item.Name),
+        var dlgTag = new ChoiceDialog(Localizer.Format("ops.gh.pickTagTitle", item.Name),
             Localizer.Format("ops.gh.pickTagBody", repo, releases.Count),
             tagLabels, 0) { Owner = Application.Current.MainWindow };
         if (dlgTag.ShowDialog() != true || dlgTag.SelectedIndex < 0) return;
@@ -752,7 +752,7 @@ public sealed class MainViewModel : LocalizedObject
         assets = assets.OrderBy(a => WinDeploy.Core.Util.Arch.PreferScore(a.Name)).ToList();
 
         var assetLabels = assets.Select(a => Localizer.Format("ops.assetLabel", a.Name, Mb(a.Size))).ToList();
-        var dlgAsset = new Views.ChoiceDialog(Localizer.Format("ops.gh.pickAssetTitle", rel.Tag),
+        var dlgAsset = new ChoiceDialog(Localizer.Format("ops.gh.pickAssetTitle", rel.Tag),
             Localizer.T("ops.gh.pickAssetBody"),
             assetLabels, 0) { Owner = Application.Current.MainWindow };
         if (dlgAsset.ShowDialog() != true || dlgAsset.SelectedIndex < 0) return;

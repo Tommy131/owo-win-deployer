@@ -1,0 +1,6 @@
+<UserControl x:Class="WinDeploy.App.Views.Server.ServiceConfigView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Nested navigation host: Current = ServerListViewModel (home) or ServerDetailViewModel (per-server). -->
+  <ContentControl Content="{Binding Current}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
+</UserControl>

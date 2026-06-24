@@ -153,7 +153,7 @@ public sealed class AppItemViewModel : LocalizedObject
             var path = Path.Combine(repoRoot, "assets", "icons", Model.Id + ".png");
             if (!File.Exists(path))
             {
-                var cache = Services.IconCache.PathFor(Model.Id);
+                var cache = IconCache.PathFor(Model.Id);
                 if (!File.Exists(cache)) return;   // keep the letter fallback
                 path = cache;
             }
@@ -173,7 +173,7 @@ public sealed class AppItemViewModel : LocalizedObject
     public void ReloadFromCache()
     {
         if (IconImage != null) return;
-        if (Services.IconCache.Load(Model.Id) is { } img) SetIcon(img);
+        if (IconCache.Load(Model.Id) is { } img) SetIcon(img);
     }
 
     private void SetIcon(ImageSource img)
@@ -187,7 +187,7 @@ public sealed class AppItemViewModel : LocalizedObject
     /// <summary>Override the icon with the app's real icon extracted from its installed .exe.</summary>
     public void SetIconFromExe(string exePath)
     {
-        var img = Services.IconExtractor.FromExe(exePath);
+        var img = IconExtractor.FromExe(exePath);
         if (img == null) return;
         IconImage = img;
         OnPropertyChanged(nameof(IconImage));
