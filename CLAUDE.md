@@ -28,5 +28,5 @@ M1 引擎打通（CLI）→ M2 配置同步+导出 → M3 WPF GUI（软件安装
 
 ## 发布（release）
 - 改版本 = 改 `src/WinDeploy.App/WinDeploy.App.csproj` 的 `<Version>`（App 与 CLI 版本号由它驱动），并同步 `README.md` / `README_CH.md` 顶部版本行。
-- **每次发布前必须更新 `CHANGELOG.md`**：在顶部新增 `## v<版本> — <YYYY-MM-DD>` 段落，**写清楚本次发行「新增 / 删除 / 调整」了什么功能**（按 `### 新增`、`### 调整`、`### 删除` 分类，无对应项写「无」）。这是硬性约束，不能省略。
-- 发行流程：推送 `v<版本>` tag 触发 `.github/workflows/release.yml`，CI 构建三种形态并创建 GitHub Release。Release notes 由 CI **从 `CHANGELOG.md` 对应版本段落自动生成**（+ 静态下载表 `.github/release-body.md` + GitHub 自动提交列表），所以 CHANGELOG 段落写得清楚 = release 说明就清楚。
+- **每次发布前必须更新 `docs/CHANGELOG.md`**：在顶部新增 `## v<版本> — <YYYY-MM-DD>` 段落，**写清楚本次发行「新增 / 删除 / 调整」了什么功能**（按 `### 新增`、`### 调整`、`### 删除` 分类，无对应项写「无」）。这是硬性约束，不能省略。
+- 发行流程：推送 `v<版本>` tag 触发 `.github/workflows/release.yml`，CI 构建三种形态并创建 GitHub Release。Release notes 由 CI **从 `docs/CHANGELOG.md` 对应版本段落自动生成**（+ 静态下载表 `.github/release-body.md` + GitHub 自动提交列表），所以 CHANGELOG 段落写得清楚 = release 说明就清楚。

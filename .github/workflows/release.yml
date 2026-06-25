@@ -125,13 +125,13 @@ jobs:
         run: |
           $tag = '${{ github.ref_name }}'
           $section = ''
-          if (Test-Path CHANGELOG.md) {
-            $changelog = Get-Content CHANGELOG.md -Raw
+          if (Test-Path docs/CHANGELOG.md) {
+            $changelog = Get-Content docs/CHANGELOG.md -Raw
             $pattern = "(?ms)^##\s+" + [regex]::Escape($tag) + "\b.*?(?=^##\s+|\z)"
             $m = [regex]::Match($changelog, $pattern)
             if ($m.Success) { $section = $m.Value.Trim() }
           }
-          if (-not $section) { Write-Host "::warning::CHANGELOG.md has no section for $tag — release notes will omit the changelog." }
+          if (-not $section) { Write-Host "::warning::docs/CHANGELOG.md has no section for $tag — release notes will omit the changelog." }
           $table = if (Test-Path .github/release-body.md) { (Get-Content .github/release-body.md -Raw).Trim() } else { '' }
           $parts = @($section, $table) | Where-Object { $_ }
           $notes = $parts -join "`n`n---`n`n"
