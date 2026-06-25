@@ -74,6 +74,8 @@ public sealed class MainViewModel : LocalizedObject
         Settings.ConfirmEnableDeveloperMode += ShowDevModeConfirmDialog;
         Settings.DeveloperModeChanged += on => { _devMode = on; Install.SetDeveloperMode(on); RebuildNav(); };
         Settings.RefreshIconsRequested += () => _ = RefreshIconsManualAsync();
+        TempMonitor.Overheat += OnTempOverheat;
+        TempMonitor.Resolved += OnTempResolved;
         SelectNavCommand = new RelayCommand(p => { if (p is NavItemViewModel n) SelectedNav = n; });
         Load();
 
@@ -111,6 +113,53 @@ public sealed class MainViewModel : LocalizedObject
     {
         var dlg = new DevModeConfirmDialog { Owner = Application.Current.MainWindow };
         return dlg.ShowDialog() == true;
+    }
+
+    // ── 硬件温度持续过高：回到应用时弹出「忽略 / 调整频率」高级提示 ──────────────────────────
+    private readonly Dictionary<string, OverheatInfo> _pendingOverheat = new();
+    private readonly HashSet<string> _promptedOverheat = new();
+    private bool _overheatDialogOpen;
+
+    private void OnTempOverheat(OverheatInfo info)
+        => Application.Current?.Dispatcher.InvokeAsync(() => { _pendingOverheat[info.Key] = info; ScheduleOverheatPrompt(); });
+
+    private void OnTempResolved(string key)
+        => Application.Current?.Dispatcher.InvokeAsync(() => { _pendingOverheat.Remove(key); _promptedOverheat.Remove(key); });
+
+    /// <summary>Called when the main window is activated (user returned to the app). Shows the advanced prompt
+    /// for the first still-overheating device not yet prompted this episode.</summary>
+    public void ShowOverheatPromptIfPending() => ScheduleOverheatPrompt();
+
+    /// <summary>Defer the prompt to ContextIdle so a window that's mid-restore (from tray / minimized) finishes
+    /// coming to the foreground first — otherwise the modal opens behind a still-minimized owner and the user
+    /// can't see or answer it.</summary>
+    private void ScheduleOverheatPrompt()
+        => Application.Current?.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new Action(TryPromptOverheat));
+
+    private void TryPromptOverheat()
+    {
+        if (_overheatDialogOpen) return;
+        // Only prompt once the window is the active foreground window (deferred to ContextIdle so a restore from
+        // tray / minimized has finished). This guarantees the modal opens on top of a real foreground owner
+        // instead of behind a still-minimized window.
+        var w = Application.Current?.MainWindow;
+        if (w is null || !w.IsActive) return;
+        var info = _pendingOverheat.Values.FirstOrDefault(i => !_promptedOverheat.Contains(i.Key));
+        if (info == null) return;
+
+        _promptedOverheat.Add(info.Key);
+        _overheatDialogOpen = true;
+        try
+        {
+            w.Activate();   // bring our window — and therefore the modal prompt — to the foreground first
+            // Per-device action only: mute this device for the session. The reminder frequency is managed
+            // centrally in 设置 → 硬件温度监控, not here.
+            var choice = Dialogs.Show(
+                Localizer.Format("tempmon.dlg.body", info.Device, info.Temp, info.Threshold),
+                Localizer.T("tempmon.dlg.title"), MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (choice == MessageBoxResult.Yes) { TempMonitor.IgnoreDevice(info.Key); _pendingOverheat.Remove(info.Key); }
+        }
+        finally { _overheatDialogOpen = false; }
     }
 
     /// <summary>Click a nav item to navigate to its page.</summary>

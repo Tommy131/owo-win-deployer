@@ -24,6 +24,8 @@ public partial class MainWindow : Window
         // Always-resident tray icon: react to the setting live, and apply the persisted choice once shown.
         vm.Settings.AlwaysShowTrayChanged += SetResidentTray;
         Loaded += (_, _) => { if (SettingsStore.Load().AlwaysShowTray) ApplyResidentTray(true, announce: false); };
+        // Returning to the app while a device keeps overheating → show the advanced ignore/adjust prompt.
+        Activated += (_, _) => (DataContext as MainViewModel)?.ShowOverheatPromptIfPending();
         Closing += OnClosing;
         Closed += (_, _) =>
         {

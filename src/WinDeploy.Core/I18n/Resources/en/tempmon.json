@@ -1,0 +1,16 @@
+{
+  "tempmon.alert.title": "Hardware temperature too high",
+  "tempmon.alert.body": "{0} reached {1}°C, above the {2}°C threshold. Please check cooling.",
+  "tempmon.device.cpu": "CPU",
+  "tempmon.device.gpu": "GPU",
+  "tempmon.device.disk": "Disk",
+  "tempmon.tts.alert": "Warning. {0} temperature is too high, currently {1} degrees Celsius. Please check cooling.",
+  "tempmon.tts.test": "This is a temperature monitoring voice test.",
+  "tempmon.dlg.title": "Sustained overheating",
+  "tempmon.dlg.body": "{0} keeps overheating (currently {1}°C, threshold {2}°C). Stop reminding you about this device for this session? (The reminder frequency is managed in Settings → Hardware temperature monitor.)",
+  "tempmon.freq.30s": "Every 30 seconds",
+  "tempmon.freq.1m": "Every 1 minute",
+  "tempmon.freq.2m": "Every 2 minutes",
+  "tempmon.freq.5m": "Every 5 minutes",
+  "tempmon.freq.10m": "Every 10 minutes"
+}

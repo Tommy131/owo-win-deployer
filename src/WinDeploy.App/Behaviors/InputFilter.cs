@@ -75,6 +75,7 @@ public static class InputFilter
             "decimal" => Regex.IsMatch(s, @"^\d*\.?\d*$"),
             "ipv4" => IsPartialIpv4(s),
             "host" => Regex.IsMatch(s, @"^[A-Za-z0-9.\-]*$"),
+            "proxy" => Regex.IsMatch(s, @"^[A-Za-z0-9.\-:/@_]*$"),   // scheme://[user:pass@]host:port — no spaces
             "portlist" => Regex.IsMatch(s, @"^[0-9,，;； ]*$"),
             _ => true,
         };

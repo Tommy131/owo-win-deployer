@@ -1,0 +1,16 @@
+{
+  "tempmon.alert.title": "硬件温度过高",
+  "tempmon.alert.body": "{0} 温度已达 {1}°C，超过阈值 {2}°C，请检查散热。",
+  "tempmon.device.cpu": "处理器",
+  "tempmon.device.gpu": "显卡",
+  "tempmon.device.disk": "硬盘",
+  "tempmon.tts.alert": "警告，{0}温度过高，当前 {1} 摄氏度，请检查散热。",
+  "tempmon.tts.test": "这是一条温度监控语音播报测试。",
+  "tempmon.dlg.title": "温度持续过高",
+  "tempmon.dlg.body": "{0} 温度持续过高（当前 {1}°C，阈值 {2}°C）。是否本次运行不再提醒此设备？（提醒频率可在「设置 → 硬件温度监控」中统一调整）",
+  "tempmon.freq.30s": "每 30 秒",
+  "tempmon.freq.1m": "每 1 分钟",
+  "tempmon.freq.2m": "每 2 分钟",
+  "tempmon.freq.5m": "每 5 分钟",
+  "tempmon.freq.10m": "每 10 分钟"
+}

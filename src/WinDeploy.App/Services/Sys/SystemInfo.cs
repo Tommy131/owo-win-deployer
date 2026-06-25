@@ -1,4 +1,5 @@
 using System.Text.Json;
+using WinDeploy.Core.I18n;
 using WinDeploy.Core.Util;
 
 namespace WinDeploy.App.Services.Sys;
@@ -465,16 +466,14 @@ public static class SystemInfo
         info.RemainingLifePercent = Cur(231) ?? Cur(202) ?? Cur(173) ?? Cur(169) ?? Cur(177);
     }
 
-    private static readonly Dictionary<int, string> SmartNames = new()
+    /// <summary>Friendly SMART attribute name, localized via the shared dictionary (key <c>sysov.smart.id.&lt;id&gt;</c>);
+    /// ids without a curated name fall back to a localized "Attribute 0xNN". Resolved at parse time, which is when
+    /// the (modal, transient) SMART dialog is opened, so it reflects the current UI language.</summary>
+    private static string AttrName(int id)
     {
-        [1] = "读取错误率", [4] = "启停次数", [5] = "重映射扇区数 (05)", [9] = "通电时间", [10] = "主轴重试",
-        [12] = "通电次数", [187] = "已报告无法纠正", [188] = "命令超时", [190] = "气流温度",
-        [194] = "温度", [195] = "硬件 ECC 已恢复", [196] = "重映射事件 (C4)", [197] = "当前待映射扇区 (C5)",
-        [198] = "无法纠正扇区 (C6)", [199] = "UDMA CRC 错误 (C7)", [231] = "SSD 剩余寿命", [233] = "媒体磨损指标",
-        [173] = "磨损均衡次数", [177] = "磨损均衡次数", [202] = "剩余寿命百分比", [241] = "总写入量 (LBA)",
-        [242] = "总读取量 (LBA)", [192] = "断电磁头收回", [193] = "磁头加载次数", [169] = "剩余寿命",
-    };
-    private static string AttrName(int id) => SmartNames.TryGetValue(id, out var n) ? n : $"属性 0x{id:X2}";
+        var key = $"sysov.smart.id.{id}";
+        return Localizer.Has(key) ? Localizer.T(key) : Localizer.Format("sysov.smart.id.generic", $"{id:X2}");
+    }
 
     private static byte[]? Bytes(JsonElement e, string p)
     {

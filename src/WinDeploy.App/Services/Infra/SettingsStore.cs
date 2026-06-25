@@ -11,6 +11,11 @@ public sealed class AppSettings
     public string? RepoUrl { get; set; }
     public string? Mirror { get; set; }
     public string? RedactKeywords { get; set; }
+
+    /// <summary>下载应用 / 安装包时通过代理网络。仅在连通性测试通过后才会保存。默认关闭。</summary>
+    public bool ProxyEnabled { get; set; }
+    /// <summary>代理地址：http(s):// 或 socks5/socks4://[user:pass@]host:port。</summary>
+    public string? ProxyUrl { get; set; }
     public string? Theme { get; set; }   // system | light | dark
 
     /// <summary>界面语言：zh | en | de。null 表示首次运行未设定（按系统语言自动选择）。</summary>
@@ -21,6 +26,21 @@ public sealed class AppSettings
 
     /// <summary>始终在系统托盘显示常驻图标：开启后无论窗口是否最小化都常驻一个托盘图标。默认关闭。</summary>
     public bool AlwaysShowTray { get; set; }
+
+    // ── 硬件温度监控（后台定时检测 CPU / GPU / NVMe 硬盘，超阈值时通知 + 可选 TTS 语音）──────────
+    /// <summary>启用硬件温度监控。默认关闭（opt-in）。</summary>
+    public bool TempMonitorEnabled { get; set; }
+    /// <summary>超温时用系统 TTS 语音播报（按界面语言）。默认开启。</summary>
+    public bool TempTtsEnabled { get; set; } = true;
+    public bool TempCpuEnabled { get; set; } = true;
+    public bool TempGpuEnabled { get; set; } = true;
+    public bool TempDiskEnabled { get; set; } = true;
+    /// <summary>各硬件告警阈值（摄氏度）。</summary>
+    public int CpuTempThreshold { get; set; } = 90;
+    public int GpuTempThreshold { get; set; } = 85;
+    public int DiskTempThreshold { get; set; } = 65;
+    /// <summary>温度持续过高时的重复提醒间隔（秒）。默认 60s。用户可在超温弹窗中调整。</summary>
+    public int TempReminderSeconds { get; set; } = 60;
 
     /// <summary>开发人员模式：开启后软件安装中心显示全部分类；关闭时普通用户仅见
     /// 办公/通讯、游戏平台、系统依赖、媒体四类。默认关闭。</summary>

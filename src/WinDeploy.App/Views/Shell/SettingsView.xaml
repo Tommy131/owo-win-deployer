@@ -1,6 +1,7 @@
 <UserControl x:Class="WinDeploy.App.Views.Shell.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:b="clr-namespace:WinDeploy.App.Behaviors">
   <Grid Margin="24,18,24,18">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
@@ -124,6 +125,78 @@
           </StackPanel>
         </Border>
 
+        <!-- 硬件温度监控 -->
+        <Border Style="{StaticResource Card}" Padding="16" Margin="0,12,0,0">
+          <StackPanel>
+            <TextBlock Text="{DynamicResource S.settings.tempmon.title}" FontSize="14" FontWeight="SemiBold" />
+            <TextBlock Text="{DynamicResource S.settings.tempmon.desc}" FontSize="12"
+                       Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,4,0,0" />
+            <CheckBox Content="{DynamicResource S.settings.tempmon.enable}" IsChecked="{Binding TempMonitorEnabled}" FontSize="13" Margin="0,10,0,0" />
+
+            <StackPanel IsEnabled="{Binding TempMonitorEnabled}" Margin="0,6,0,0">
+              <CheckBox Content="{DynamicResource S.settings.tempmon.tts}" IsChecked="{Binding TempTts}" FontSize="13" Margin="0,4,0,0" />
+
+              <!-- 每个硬件：启用开关 + 阈值（°C） -->
+              <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <CheckBox Grid.Column="0" Content="{DynamicResource S.settings.tempmon.cpu}" IsChecked="{Binding TempCpu}" FontSize="13" VerticalAlignment="Center" />
+                <TextBox Grid.Column="1" Text="{Binding CpuTempThreshold}" b:InputFilter.Mode="digits" Width="56" Height="30"
+                         VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Padding="4,0" />
+                <TextBlock Grid.Column="2" Text="{DynamicResource S.settings.tempmon.unit}" FontSize="12.5" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="6,0,0,0" />
+              </Grid>
+              <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <CheckBox Grid.Column="0" Content="{DynamicResource S.settings.tempmon.gpu}" IsChecked="{Binding TempGpu}" FontSize="13" VerticalAlignment="Center" />
+                <TextBox Grid.Column="1" Text="{Binding GpuTempThreshold}" b:InputFilter.Mode="digits" Width="56" Height="30"
+                         VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Padding="4,0" />
+                <TextBlock Grid.Column="2" Text="{DynamicResource S.settings.tempmon.unit}" FontSize="12.5" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="6,0,0,0" />
+              </Grid>
+              <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <CheckBox Grid.Column="0" Content="{DynamicResource S.settings.tempmon.disk}" IsChecked="{Binding TempDisk}" FontSize="13" VerticalAlignment="Center" />
+                <TextBox Grid.Column="1" Text="{Binding DiskTempThreshold}" b:InputFilter.Mode="digits" Width="56" Height="30"
+                         VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Padding="4,0" />
+                <TextBlock Grid.Column="2" Text="{DynamicResource S.settings.tempmon.unit}" FontSize="12.5" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="6,0,0,0" />
+              </Grid>
+
+              <!-- 提醒频率：温度持续过高时的重复提醒间隔，集中统一管理（非单设备） -->
+              <Grid Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{DynamicResource S.settings.tempmon.freq}" FontSize="13"
+                           Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" Width="150" Height="32" SelectedIndex="{Binding ReminderIndex}">
+                  <ComboBoxItem Content="{DynamicResource S.tempmon.freq.30s}" />
+                  <ComboBoxItem Content="{DynamicResource S.tempmon.freq.1m}" />
+                  <ComboBoxItem Content="{DynamicResource S.tempmon.freq.2m}" />
+                  <ComboBoxItem Content="{DynamicResource S.tempmon.freq.5m}" />
+                  <ComboBoxItem Content="{DynamicResource S.tempmon.freq.10m}" />
+                </ComboBox>
+              </Grid>
+
+              <Button Content="{DynamicResource S.settings.tempmon.test}" Style="{StaticResource MiniButton}"
+                      HorizontalAlignment="Left" Margin="0,12,0,0" Command="{Binding TestTtsCommand}" />
+            </StackPanel>
+
+            <TextBlock Text="{DynamicResource S.settings.tempmon.note}" FontSize="11.5"
+                       Foreground="{DynamicResource TextTertiary}" TextWrapping="Wrap" Margin="0,12,0,0" />
+          </StackPanel>
+        </Border>
+
         <Border Style="{StaticResource Card}" Padding="16" Margin="0,12,0,0">
           <StackPanel>
             <TextBlock Text="{DynamicResource S.settings.paths.title}" FontSize="14" FontWeight="SemiBold" />
@@ -148,6 +221,29 @@
           </StackPanel>
         </Border>
 
+        <!-- 下载代理 -->
+        <Border Style="{StaticResource Card}" Padding="16" Margin="0,12,0,0">
+          <StackPanel>
+            <TextBlock Text="{DynamicResource S.settings.proxy.title}" FontSize="14" FontWeight="SemiBold" />
+            <TextBlock Text="{DynamicResource S.settings.proxy.desc}" FontSize="12"
+                       Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" Margin="0,4,0,10" />
+            <CheckBox Content="{DynamicResource S.settings.proxy.enable}" IsChecked="{Binding ProxyEnabled}" FontSize="13" />
+            <StackPanel IsEnabled="{Binding ProxyEnabled}" Margin="0,8,0,0">
+              <TextBlock Text="{DynamicResource S.settings.proxy.url}" FontSize="12" Foreground="{DynamicResource TextSecondary}" />
+              <TextBox Text="{Binding ProxyUrl, UpdateSourceTrigger=PropertyChanged}" b:InputFilter.Mode="proxy"
+                       Height="34" VerticalContentAlignment="Center" Padding="8,0" Margin="0,3,0,0" FontFamily="Consolas" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+              <Button Content="{DynamicResource S.settings.proxy.save}" Style="{StaticResource PrimaryButton}"
+                      Command="{Binding SaveProxyCommand}" />
+              <TextBlock Text="{Binding ProxyNote}" FontSize="12" Foreground="{DynamicResource TextSecondary}"
+                         VerticalAlignment="Center" Margin="12,0,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+            <TextBlock Text="{DynamicResource S.settings.proxy.note}" FontSize="11.5"
+                       Foreground="{DynamicResource TextTertiary}" TextWrapping="Wrap" Margin="0,10,0,0" />
+          </StackPanel>
+        </Border>
+
         <Border Style="{StaticResource Card}" Padding="16" Margin="0,12,0,0">
           <StackPanel>
             <TextBlock Text="{DynamicResource S.settings.redact.title}" FontSize="14" FontWeight="SemiBold" />
@@ -160,6 +256,8 @@
 
         <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
           <Button Content="{DynamicResource S.settings.save}" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}" />
+          <Button Content="{DynamicResource S.settings.reset.button}" Style="{StaticResource DangerButton}" Margin="10,0,0,0"
+                  Command="{Binding ResetCommand}" ToolTip="{DynamicResource S.settings.reset.warn1.title}" />
           <TextBlock Text="{Binding Note}" Foreground="{DynamicResource OkFg}" VerticalAlignment="Center" Margin="14,0,0,0" />
         </StackPanel>
 

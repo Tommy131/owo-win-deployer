@@ -1,0 +1,16 @@
+{
+  "tempmon.alert.title": "Hardwaretemperatur zu hoch",
+  "tempmon.alert.body": "{0} erreichte {1}°C, über dem Schwellwert von {2}°C. Bitte Kühlung prüfen.",
+  "tempmon.device.cpu": "Prozessor",
+  "tempmon.device.gpu": "Grafik",
+  "tempmon.device.disk": "Festplatte",
+  "tempmon.tts.alert": "Warnung. Temperatur von {0} ist zu hoch, aktuell {1} Grad Celsius. Bitte Kühlung prüfen.",
+  "tempmon.tts.test": "Dies ist ein Sprachtest der Temperaturüberwachung.",
+  "tempmon.dlg.title": "Anhaltende Überhitzung",
+  "tempmon.dlg.body": "{0} überhitzt weiterhin (aktuell {1}°C, Schwellwert {2}°C). Für diese Sitzung nicht mehr an dieses Gerät erinnern? (Die Erinnerungsfrequenz wird unter Einstellungen → Hardware-Temperaturüberwachung verwaltet.)",
+  "tempmon.freq.30s": "Alle 30 Sekunden",
+  "tempmon.freq.1m": "Jede Minute",
+  "tempmon.freq.2m": "Alle 2 Minuten",
+  "tempmon.freq.5m": "Alle 5 Minuten",
+  "tempmon.freq.10m": "Alle 10 Minuten"
+}

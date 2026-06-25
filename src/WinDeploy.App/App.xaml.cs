@@ -31,6 +31,13 @@ public partial class App : Application
         LocalizationManager.Apply();
 
         ThemeManager.Apply(ThemeManager.Parse(settings.Theme));
+
+        // Route downloads through the saved proxy (no-op / system default when disabled).
+        WinDeploy.Core.Net.HttpProxy.Apply(settings.ProxyEnabled, settings.ProxyUrl);
+
+        // Start the background hardware-temperature watchdog (no-op unless enabled in settings).
+        TempMonitor.Configure(TempMonitorConfig.From(settings));
+
         AuditLog.App($"应用启动 · 语言 {lang} · 主题 {settings.Theme ?? "system"}");
         base.OnStartup(e);
     }
@@ -58,6 +65,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        TempMonitor.Stop();
         AuditLog.App("应用退出");
         base.OnExit(e);
     }

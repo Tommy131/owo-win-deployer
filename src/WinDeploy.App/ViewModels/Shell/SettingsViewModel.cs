@@ -1,7 +1,9 @@
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using WinDeploy.App.Services;
 using WinDeploy.Core.I18n;
+using WinDeploy.Core.Net;
 
 namespace WinDeploy.App.ViewModels.Shell;
 
@@ -24,12 +26,22 @@ public sealed class SettingsViewModel : ObservableObject
         _developerMode = _s.DeveloperMode;
         _runAtStartup = Services.Sys.AutoStart.IsEnabled();
         _alwaysShowTray = _s.AlwaysShowTray;
+        _tempMonitorEnabled = _s.TempMonitorEnabled;
+        _tempTts = _s.TempTtsEnabled;
+        _tempCpu = _s.TempCpuEnabled; _tempGpu = _s.TempGpuEnabled; _tempDisk = _s.TempDiskEnabled;
+        _cpuTempThreshold = _s.CpuTempThreshold; _gpuTempThreshold = _s.GpuTempThreshold; _diskTempThreshold = _s.DiskTempThreshold;
+        _reminderSeconds = _s.TempReminderSeconds;
+        _proxyEnabled = _s.ProxyEnabled;
+        _proxyUrl = _s.ProxyUrl ?? "";
         SettingsPath = SettingsStore.FilePath;
         SaveCommand = new RelayCommand(_ => Save());
         OpenFolderCommand = new RelayCommand(_ => OpenFolder());
         CheckUpdateCommand = new RelayCommand(_ => _ = CheckUpdateAsync());
         OpenLinkCommand = new RelayCommand(p => OpenUrl(p as string));
         RefreshIconsCommand = new RelayCommand(_ => RefreshIconsRequested?.Invoke());
+        TestTtsCommand = new RelayCommand(_ => Tts.Speak(Localizer.T("tempmon.tts.test")));
+        SaveProxyCommand = new RelayCommand(_ => _ = SaveProxyAsync(), _ => !_proxyTesting);
+        ResetCommand = new RelayCommand(_ => ResetAll());
     }
 
     // ── About / developer ───────────────────────────────────────────────
@@ -91,6 +103,58 @@ public sealed class SettingsViewModel : ObservableObject
 
     private string _redactKeywords;
     public string RedactKeywords { get => _redactKeywords; set { if (Set(ref _redactKeywords, value)) Note = ""; } }
+
+    // ── 下载代理（保存前必须通过连通性测试）─────────────────────────────────
+    public RelayCommand SaveProxyCommand { get; }
+
+    private bool _proxyEnabled;
+    public bool ProxyEnabled { get => _proxyEnabled; set { if (Set(ref _proxyEnabled, value)) ProxyNote = ""; } }
+
+    private string _proxyUrl;
+    public string ProxyUrl { get => _proxyUrl; set { if (Set(ref _proxyUrl, value)) ProxyNote = ""; } }
+
+    private bool _proxyTesting;
+    public bool ProxyTesting { get => _proxyTesting; set { if (Set(ref _proxyTesting, value)) CommandManager.InvalidateRequerySuggested(); } }
+
+    private string _proxyNote = "";
+    public string ProxyNote { get => _proxyNote; set => Set(ref _proxyNote, value); }
+
+    /// <summary>Persist + apply the download proxy. Disabling saves immediately; enabling first validates the
+    /// format (strict regex) and verifies live connectivity through the proxy — saving only if reachable.</summary>
+    private async Task SaveProxyAsync()
+    {
+        if (!_proxyEnabled)
+        {
+            _s.ProxyEnabled = false;
+            _s.ProxyUrl = (_proxyUrl ?? "").Trim();
+            SettingsStore.Save(_s);
+            HttpProxy.Apply(false, _s.ProxyUrl);
+            ProxyNote = Localizer.T("settings.proxy.disabled");
+            AuditLog.Action("下载代理：关闭");
+            return;
+        }
+
+        var url = (_proxyUrl ?? "").Trim();
+        if (!HttpProxy.IsValid(url)) { ProxyNote = Localizer.T("settings.proxy.badFormat"); return; }
+
+        ProxyTesting = true;
+        ProxyNote = Localizer.T("settings.proxy.testing");
+        var (ok, detail) = await HttpProxy.TestAsync(url);
+        ProxyTesting = false;
+        if (!ok)
+        {
+            ProxyNote = Localizer.Format("settings.proxy.unreachable", detail);   // not saved
+            AuditLog.Action($"下载代理：连通性测试失败（{detail}），未保存");
+            return;
+        }
+
+        _s.ProxyEnabled = true;
+        _s.ProxyUrl = url;
+        SettingsStore.Save(_s);
+        HttpProxy.Apply(true, url);
+        ProxyNote = Localizer.T("settings.proxy.ok");
+        AuditLog.Action($"下载代理：已启用 {url}");
+    }
 
     // ── 开发人员模式（即时生效并持久化）─────────────────────────────────
     private bool _developerMode;
@@ -161,6 +225,71 @@ public sealed class SettingsViewModel : ObservableObject
 
     /// <summary>切换「托盘常驻图标」时触发，让主窗口立即显示 / 隐藏常驻托盘图标。</summary>
     public event Action<bool>? AlwaysShowTrayChanged;
+
+    // ── 硬件温度监控（即时生效并持久化）────────────────────────────────────
+    public RelayCommand TestTtsCommand { get; }
+
+    private bool _tempMonitorEnabled;
+    public bool TempMonitorEnabled
+    {
+        get => _tempMonitorEnabled;
+        set { if (Set(ref _tempMonitorEnabled, value)) { ApplyTempMonitor(); AuditLog.Action($"硬件温度监控：{(value ? "开启" : "关闭")}"); } }
+    }
+
+    private bool _tempTts;
+    public bool TempTts { get => _tempTts; set { if (Set(ref _tempTts, value)) ApplyTempMonitor(); } }
+
+    private bool _tempCpu;
+    public bool TempCpu { get => _tempCpu; set { if (Set(ref _tempCpu, value)) ApplyTempMonitor(); } }
+    private bool _tempGpu;
+    public bool TempGpu { get => _tempGpu; set { if (Set(ref _tempGpu, value)) ApplyTempMonitor(); } }
+    private bool _tempDisk;
+    public bool TempDisk { get => _tempDisk; set { if (Set(ref _tempDisk, value)) ApplyTempMonitor(); } }
+
+    private int _cpuTempThreshold;
+    public int CpuTempThreshold { get => _cpuTempThreshold; set { if (Set(ref _cpuTempThreshold, ClampTemp(value))) ApplyTempMonitor(); } }
+    private int _gpuTempThreshold;
+    public int GpuTempThreshold { get => _gpuTempThreshold; set { if (Set(ref _gpuTempThreshold, ClampTemp(value))) ApplyTempMonitor(); } }
+    private int _diskTempThreshold;
+    public int DiskTempThreshold { get => _diskTempThreshold; set { if (Set(ref _diskTempThreshold, ClampTemp(value))) ApplyTempMonitor(); } }
+
+    /// <summary>Reasonable warn-threshold bounds; keeps a typo from disabling (0) or never firing (999) alerts.</summary>
+    private static int ClampTemp(int v) => Math.Clamp(v, 40, 110);
+
+    /// <summary>Central reminder-frequency choices (seconds) — repeat-alert interval while a device stays hot.
+    /// The order here matches the ComboBox items in SettingsView.</summary>
+    private static readonly int[] ReminderSecondsOptions = { 30, 60, 120, 300, 600 };
+
+    private int _reminderSeconds;
+    /// <summary>Selected reminder-frequency index, bound to the settings ComboBox (centralized, not per-device).</summary>
+    public int ReminderIndex
+    {
+        get { var i = Array.IndexOf(ReminderSecondsOptions, _reminderSeconds); return i >= 0 ? i : 1; }
+        set
+        {
+            var sec = ReminderSecondsOptions[Math.Clamp(value, 0, ReminderSecondsOptions.Length - 1)];
+            if (_reminderSeconds == sec) return;
+            _reminderSeconds = sec;
+            OnPropertyChanged();
+            ApplyTempMonitor();
+        }
+    }
+
+    /// <summary>Persist all temperature-monitor settings and reconfigure the background watchdog live.</summary>
+    private void ApplyTempMonitor()
+    {
+        _s.TempMonitorEnabled = _tempMonitorEnabled;
+        _s.TempTtsEnabled = _tempTts;
+        _s.TempCpuEnabled = _tempCpu;
+        _s.TempGpuEnabled = _tempGpu;
+        _s.TempDiskEnabled = _tempDisk;
+        _s.CpuTempThreshold = _cpuTempThreshold;
+        _s.GpuTempThreshold = _gpuTempThreshold;
+        _s.DiskTempThreshold = _diskTempThreshold;
+        _s.TempReminderSeconds = _reminderSeconds;
+        SettingsStore.Save(_s);
+        TempMonitor.Configure(TempMonitorConfig.From(_s));
+    }
 
     // ── 关闭主窗口行为（即时持久化）────────────────────────────────────
     private string _closeAction;
@@ -253,6 +382,7 @@ public sealed class SettingsViewModel : ObservableObject
 
     public RelayCommand SaveCommand { get; }
     public RelayCommand OpenFolderCommand { get; }
+    public RelayCommand ResetCommand { get; }
     public event Action? Saved;
 
     private void OpenFolder()
@@ -285,4 +415,44 @@ public sealed class SettingsViewModel : ObservableObject
             ? Array.Empty<string>()
             : raw.Split(new[] { ',', ' ', '\n', '\r', '\t', ';', '，', '；' },
                 StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    // ── 重置所有设置与应用数据（三重确认）──────────────────────────────────
+    /// <summary>Wipe every setting and all app data back to a clean first-run state — behind three confirmations:
+    /// two warning prompts, then a type-the-phrase gate. On success the data folder is deleted and the app restarts.</summary>
+    private void ResetAll()
+    {
+        if (Dialogs.Show(Localizer.T("settings.reset.warn1.body"), Localizer.T("settings.reset.warn1.title"),
+                MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+
+        if (Dialogs.Show(Localizer.T("settings.reset.warn2.body"), Localizer.T("settings.reset.warn2.title"),
+                MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+
+        var dlg = new ConfirmPhraseDialog(
+            Localizer.T("settings.reset.confirm.title"),
+            Localizer.T("settings.reset.confirm.body"),
+            Localizer.T("settings.reset.confirm.phrase")) { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true) return;
+
+        PerformResetAndRestart();
+    }
+
+    /// <summary>Clear app-controlled state (autostart), then delete the entire data folder and relaunch via a
+    /// detached shell that waits for this process to exit first (so even locked files like the log are removed).</summary>
+    private static void PerformResetAndRestart()
+    {
+        AuditLog.Action("重置：清除全部设置与应用数据并重启");
+        try { Services.Sys.AutoStart.Set(false); } catch { /* best effort */ }
+        try
+        {
+            var exe = Environment.ProcessPath;
+            var folder = SettingsStore.Folder;
+            // ping = ~2s grace for our process to fully exit; then remove the data folder and relaunch.
+            var args = $"/c ping 127.0.0.1 -n 3 >nul & rmdir /s /q \"{folder}\""
+                       + (string.IsNullOrEmpty(exe) ? "" : $" & start \"\" \"{exe}\"");
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", args)
+            { CreateNoWindow = true, UseShellExecute = false });
+        }
+        catch { /* if the shell can't be spawned, still shut down so a manual cleanup is possible */ }
+        Application.Current.Shutdown();
+    }
 }
