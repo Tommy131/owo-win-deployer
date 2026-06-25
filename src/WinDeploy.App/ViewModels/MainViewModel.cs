@@ -1180,6 +1180,7 @@ public sealed class MainViewModel : LocalizedObject
         AuditLog.Action($"开始安装 {selected.Count} 项：{string.Join(", ", selected.Select(s => s.Id))}");
         var rows = selected.GroupBy(s => s.Id).ToDictionary(g => g.Key, g => Progress.Enqueue(g.Key, g.First().Name, g.First().Install.Method));
 
+        RunSummary? summary = null;
         await _opGate.WaitAsync();
         try
         {
@@ -1188,7 +1189,7 @@ public sealed class MainViewModel : LocalizedObject
             Progress.BeginRun(Localizer.T("verb.install"), plan.Count(p => p.Status == PlanStatus.ToInstall));
 
             CatalogItem? current = null;
-            var summary = await _engine.ApplyAsync(plan, ctx, dryRun: false,
+            summary = await _engine.ApplyAsync(plan, ctx, dryRun: false,
                 onStart: pi => { current = pi.Item; dispatcher.Invoke(() => { if (rows.TryGetValue(pi.Item.Id, out var r)) Progress.Start(r); }); },
                 onDone: r =>
                 {
@@ -1219,6 +1220,27 @@ public sealed class MainViewModel : LocalizedObject
             await RunUpdateCheckAsync();
         }
         finally { _opGate.Release(); }
+
+        // After the run (gate released so the dialog doesn't hold the op lock): write an HTML deployment report
+        // and offer to open it — but only when something actually ran (skip when everything was already installed).
+        if (summary is { } s && s.Ok + s.Failed > 0) OfferDeployReport(s);
+    }
+
+    /// <summary>Write the run summary as an HTML report under the app data folder and offer to open it.</summary>
+    private void OfferDeployReport(RunSummary summary)
+    {
+        try
+        {
+            var dir = Path.Combine(SettingsStore.Folder, "reports");
+            Directory.CreateDirectory(dir);
+            var path = Path.Combine(dir, $"deploy-{DateTime.Now:yyyyMMdd-HHmmss}.html");
+            File.WriteAllText(path, DeployReport.ToHtml(summary, Environment.MachineName, DateTime.Now));
+            AuditLog.App($"已生成部署报告：{path}");
+            if (Dialogs.Show(Localizer.Format("install.report.prompt", path), Localizer.T("install.report.title"),
+                    MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+        }
+        catch (Exception ex) { AuditLog.App($"生成部署报告失败：{ex.Message}"); }
     }
 
     private void OnUpdateRequested()
