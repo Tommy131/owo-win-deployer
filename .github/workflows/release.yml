@@ -23,9 +23,9 @@ jobs:
       SIGN_PFX_BASE64: ${{ secrets.SIGN_PFX_BASE64 }}
       SIGN_PFX_PASSWORD: ${{ secrets.SIGN_PFX_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
 
@@ -112,7 +112,7 @@ jobs:
           Copy-Item "dist/singlefile/app/WinDeploy.exe" "dist/WinDeploy.exe" -Force
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: OwO-Win-Deployer-win-x64
           path: dist/*.zip
@@ -140,7 +140,7 @@ jobs:
 
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: OwO! Win Deployer ${{ github.ref_name }}
           generate_release_notes: true
