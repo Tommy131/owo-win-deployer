@@ -24,6 +24,7 @@ public sealed class SettingsViewModel : ObservableObject
         _theme = _s.Theme ?? "system";
         _closeAction = _s.CloseAction ?? "ask";
         _developerMode = _s.DeveloperMode;
+        _restorePointBeforeApply = _s.RestorePointBeforeApply;
         _runAtStartup = Services.Sys.AutoStart.IsEnabled();
         _alwaysShowTray = _s.AlwaysShowTray;
         _tempMonitorEnabled = _s.TempMonitorEnabled;
@@ -185,6 +186,14 @@ public sealed class SettingsViewModel : ObservableObject
 
     /// <summary>开启开发人员模式前触发，供外部显示二次确认弹窗。返回 false 则取消启用。</summary>
     public event Func<bool>? ConfirmEnableDeveloperMode;
+
+    private bool _restorePointBeforeApply;
+    /// <summary>批量安装前创建系统还原点（持久化；安装流程读取此设置）。</summary>
+    public bool RestorePointBeforeApply
+    {
+        get => _restorePointBeforeApply;
+        set { if (Set(ref _restorePointBeforeApply, value)) { _s.RestorePointBeforeApply = value; SettingsStore.Save(_s); } }
+    }
 
     // ── 开机自启动 / 托盘常驻（即时生效并持久化）──────────────────────────
     private bool _runAtStartup;

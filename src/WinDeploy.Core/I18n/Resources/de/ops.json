@@ -44,6 +44,8 @@
   "ops.php.pickTitle": "PHP-Version wählen",
   "ops.restart.done": "Neu gestartet ({0} Prozess(e) beendet, dann gestartet)",
   "ops.restart.fail": "Neustart fehlgeschlagen: {0}",
+  "ops.restore.creating": "Systemwiederherstellungspunkt wird erstellt …",
+  "ops.restore.failBody": "Systemwiederherstellungspunkt konnte nicht erstellt werden:\n{0}\n\nErfordert Administratorrechte und aktivierte Systemwiederherstellung auf dem Systemlaufwerk. Trotzdem mit der Installation fortfahren?",
   "ops.result.cancelled": "Abgebrochen",
   "ops.result.unknownOp": "Unbekannter Vorgang",
   "ops.risk.body": "{0}: {1}?\n\n{2}",

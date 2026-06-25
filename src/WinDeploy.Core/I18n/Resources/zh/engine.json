@@ -109,6 +109,8 @@
   "engine.report.statusOk": "成功",
   "engine.report.statusFailed": "失败",
   "engine.report.statusSkipped": "跳过",
+  "engine.restore.created": "已创建系统还原点",
+  "engine.restore.failed": "无法创建还原点（需管理员且已启用系统还原）",
   "engine.ssh.applyConfig": "套用 {0}",
   "engine.ssh.configName": "SSH 配置",
   "engine.ssh.generated": "已生成新 ed25519 密钥",

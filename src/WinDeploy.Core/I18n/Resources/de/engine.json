@@ -109,6 +109,8 @@
   "engine.report.statusOk": "Erfolgreich",
   "engine.report.statusFailed": "Fehlgeschlagen",
   "engine.report.statusSkipped": "Übersprungen",
+  "engine.restore.created": "Systemwiederherstellungspunkt erstellt",
+  "engine.restore.failed": "Wiederherstellungspunkt konnte nicht erstellt werden (Admin und aktivierte Systemwiederherstellung erforderlich)",
   "engine.ssh.applyConfig": "{0} angewendet",
   "engine.ssh.configName": "SSH-Konfiguration",
   "engine.ssh.generated": "Neuen ed25519-Schlüssel erzeugt",

@@ -44,6 +44,8 @@
   "ops.php.pickTitle": "选择 PHP 版本",
   "ops.restart.done": "已重启（结束 {0} 个进程后启动）",
   "ops.restart.fail": "重启失败：{0}",
+  "ops.restore.creating": "正在创建系统还原点 …",
+  "ops.restore.failBody": "无法创建系统还原点：\n{0}\n\n需要管理员权限且系统盘已启用系统还原。是否仍要继续安装？",
   "ops.result.cancelled": "已取消",
   "ops.result.unknownOp": "未知操作",
   "ops.risk.body": "确定要{0} {1}？\n\n{2}",

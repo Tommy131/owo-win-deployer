@@ -1180,6 +1180,9 @@ public sealed class MainViewModel : LocalizedObject
         AuditLog.Action($"开始安装 {selected.Count} 项：{string.Join(", ", selected.Select(s => s.Id))}");
         var rows = selected.GroupBy(s => s.Id).ToDictionary(g => g.Key, g => Progress.Enqueue(g.Key, g.First().Name, g.First().Install.Method));
 
+        // Optional safety net: create a System Restore point before a batch install (opt-in in Settings).
+        if (SettingsStore.Load().RestorePointBeforeApply && !await TryCreateRestorePointAsync()) return;
+
         RunSummary? summary = null;
         await _opGate.WaitAsync();
         try
@@ -1224,6 +1227,20 @@ public sealed class MainViewModel : LocalizedObject
         // After the run (gate released so the dialog doesn't hold the op lock): write an HTML deployment report
         // and offer to open it — but only when something actually ran (skip when everything was already installed).
         if (summary is { } s && s.Ok + s.Failed > 0) OfferDeployReport(s);
+    }
+
+    /// <summary>Create a System Restore point before applying. On failure, ask whether to proceed anyway
+    /// (it needs admin + System Restore enabled). Returns true to continue with the install.</summary>
+    private async Task<bool> TryCreateRestorePointAsync()
+    {
+        var (ok, msg) = await BusyDialog.RunAsync(Application.Current.MainWindow,
+            Localizer.T("settings.restorePoint"), Localizer.T("ops.restore.creating"),
+            () => RestorePoint.CreateAsync($"OwO! Win Deployer · {DateTime.Now:yyyy-MM-dd HH:mm}"));
+        if (ok) { AuditLog.Action($"已创建系统还原点：{msg}"); return true; }
+
+        AuditLog.App($"创建系统还原点失败：{msg}");
+        return Dialogs.Show(Localizer.Format("ops.restore.failBody", msg), Localizer.T("settings.restorePoint"),
+            MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
     }
 
     /// <summary>Write the run summary as an HTML report under the app data folder and offer to open it.</summary>

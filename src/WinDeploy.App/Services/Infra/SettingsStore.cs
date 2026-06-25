@@ -46,6 +46,9 @@ public sealed class AppSettings
     /// 办公/通讯、游戏平台、系统依赖、媒体四类。默认关闭。</summary>
     public bool DeveloperMode { get; set; }
 
+    /// <summary>批量安装前先创建系统还原点（Checkpoint-Computer，需管理员且已启用系统还原）。默认关闭。</summary>
+    public bool RestorePointBeforeApply { get; set; }
+
     /// <summary>终端「黑客风格」配色（绿色磷光 + 辉光 + 近黑底）。null 视为默认开启。</summary>
     public bool? TerminalHackerFx { get; set; }
 

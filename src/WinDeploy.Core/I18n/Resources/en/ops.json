@@ -44,6 +44,8 @@
   "ops.php.pickTitle": "Choose PHP version",
   "ops.restart.done": "Restarted (ended {0} process(es), then launched)",
   "ops.restart.fail": "Restart failed: {0}",
+  "ops.restore.creating": "Creating a system restore point …",
+  "ops.restore.failBody": "Could not create a system restore point:\n{0}\n\nIt requires administrator rights and System Restore enabled on the system drive. Continue with the installation anyway?",
   "ops.result.cancelled": "Cancelled",
   "ops.result.unknownOp": "Unknown operation",
   "ops.risk.body": "{0} {1}?\n\n{2}",

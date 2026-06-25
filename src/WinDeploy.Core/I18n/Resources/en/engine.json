@@ -109,6 +109,8 @@
   "engine.report.statusOk": "Succeeded",
   "engine.report.statusFailed": "Failed",
   "engine.report.statusSkipped": "Skipped",
+  "engine.restore.created": "System restore point created",
+  "engine.restore.failed": "Could not create a restore point (needs admin and System Restore enabled)",
   "engine.ssh.applyConfig": "Applied {0}",
   "engine.ssh.configName": "SSH config",
   "engine.ssh.generated": "Generated a new ed25519 key",
