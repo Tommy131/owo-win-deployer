@@ -19,6 +19,9 @@ public sealed class AppSettings
     /// <summary>关闭主窗口时的行为：ask（每次询问，默认）| tray（最小化到后台常驻）| exit（直接退出）。</summary>
     public string? CloseAction { get; set; }
 
+    /// <summary>始终在系统托盘显示常驻图标：开启后无论窗口是否最小化都常驻一个托盘图标。默认关闭。</summary>
+    public bool AlwaysShowTray { get; set; }
+
     /// <summary>开发人员模式：开启后软件安装中心显示全部分类；关闭时普通用户仅见
     /// 办公/通讯、游戏平台、系统依赖、媒体四类。默认关闭。</summary>
     public bool DeveloperMode { get; set; }

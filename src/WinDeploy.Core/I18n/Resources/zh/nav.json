@@ -8,6 +8,7 @@
   "nav.progress": "运行进度",
   "nav.export": "导出",
   "nav.systemOverview": "系统概览",
+  "nav.power": "能效管理",
   "nav.maintenance": "系统维护",
   "nav.processes": "进程管理",
   "nav.startup": "启动项",

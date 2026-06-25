@@ -3,21 +3,27 @@ using System.Windows;
 using WinDeploy.App.Services;
 using WinDeploy.App.ViewModels;
 using WinDeploy.App.Views;
+using WinDeploy.Core.I18n;
 
 namespace WinDeploy.App;
 
 public partial class MainWindow : Window
 {
     private TrayIcon? _tray;
-    private bool _exiting;   // set when a real shutdown is in progress
+    private bool _exiting;    // set when a real shutdown is in progress
+    private bool _resident;   // tray icon stays visible at all times (设置 → 始终在系统托盘显示常驻图标)
 
     public MainWindow()
     {
         InitializeComponent();
-        DataContext = new MainViewModel();
+        var vm = new MainViewModel();
+        DataContext = vm;
         // Window / taskbar icon comes from the embedded ApplicationIcon (app.ico) — same as the .exe file icon.
         // Native title bar gets its handle only at SourceInitialized; theme it then.
         SourceInitialized += (_, _) => ThemeManager.ApplyTitleBar(this);
+        // Always-resident tray icon: react to the setting live, and apply the persisted choice once shown.
+        vm.Settings.AlwaysShowTrayChanged += SetResidentTray;
+        Loaded += (_, _) => { if (SettingsStore.Load().AlwaysShowTray) ApplyResidentTray(true, announce: false); };
         Closing += OnClosing;
         Closed += (_, _) =>
         {
@@ -26,6 +32,33 @@ public partial class MainWindow : Window
             (DataContext as MainViewModel)?.Ftp.Shutdown();
             (DataContext as MainViewModel)?.Cloudflare.Shutdown();
         };
+    }
+
+    private void EnsureTray()
+        => _tray ??= new TrayIcon(WinDeploy.App.AppInfo.TitleWithVersion, RestoreFromTray, ExitFromTray, BuildTrayMenu);
+
+    /// <summary>Live toggle from 设置 → 始终在系统托盘显示常驻图标. Announces (one-off notification) so the user
+    /// can find the freshly-added icon — Windows 11 tucks it into the "^" overflow.</summary>
+    public void SetResidentTray(bool on) => ApplyResidentTray(on, announce: true);
+
+    /// <summary>Apply the always-resident tray state. When on, the icon shows even while the main window is open;
+    /// when off, it's hidden again — unless the window is currently minimized to tray (then the icon must stay,
+    /// or the user couldn't get back). <paramref name="announce"/> pops a confirming notification (only on the
+    /// user's explicit toggle, not on every startup).</summary>
+    private void ApplyResidentTray(bool on, bool announce)
+    {
+        _resident = on;
+        if (on)
+        {
+            EnsureTray();
+            _tray!.Show(hint: false);
+            if (announce) _tray.Notify(Localizer.T("tray.resident.title"), Localizer.T("tray.resident.body"));
+            if (DataContext is MainViewModel vm) _ = vm.RefreshWebServiceStatusAsync(force: true);
+        }
+        else if (IsVisible)
+        {
+            _tray?.Hide();
+        }
     }
 
     /// <summary>Close-button behavior: ask (default) → prompt; tray → minimize to tray; exit → really quit.</summary>
@@ -51,8 +84,8 @@ public partial class MainWindow : Window
 
     private void HideToTray()
     {
-        _tray ??= new TrayIcon(WinDeploy.App.AppInfo.TitleWithVersion, RestoreFromTray, ExitFromTray, BuildTrayMenu);
-        _tray.Show();
+        EnsureTray();
+        _tray!.Show();
         Hide();
         // Prime the web-server status cache so the first tray right-click already shows live状态.
         if (DataContext is MainViewModel vm) _ = vm.RefreshWebServiceStatusAsync(force: true);
@@ -216,7 +249,7 @@ public partial class MainWindow : Window
         WindowState = WindowState.Normal;
         Activate();
         Topmost = true; Topmost = false;   // nudge to foreground
-        _tray?.Hide();
+        if (!_resident) _tray?.Hide();     // keep the icon when it's set to always-resident
     }
 
     private void ExitFromTray()

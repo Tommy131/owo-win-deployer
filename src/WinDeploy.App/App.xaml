@@ -605,6 +605,9 @@
       <DataTemplate DataType="{x:Type vmsys:SystemOverviewViewModel}">
         <vsys:SystemOverviewView />
       </DataTemplate>
+      <DataTemplate DataType="{x:Type vmsys:PowerViewModel}">
+        <vsys:PowerView />
+      </DataTemplate>
       <DataTemplate DataType="{x:Type vmsys:MaintenanceViewModel}">
         <vsys:MaintenanceView />
       </DataTemplate>

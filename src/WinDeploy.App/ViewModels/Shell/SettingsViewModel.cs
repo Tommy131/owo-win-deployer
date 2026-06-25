@@ -22,6 +22,8 @@ public sealed class SettingsViewModel : ObservableObject
         _theme = _s.Theme ?? "system";
         _closeAction = _s.CloseAction ?? "ask";
         _developerMode = _s.DeveloperMode;
+        _runAtStartup = Services.Sys.AutoStart.IsEnabled();
+        _alwaysShowTray = _s.AlwaysShowTray;
         SettingsPath = SettingsStore.FilePath;
         SaveCommand = new RelayCommand(_ => Save());
         OpenFolderCommand = new RelayCommand(_ => OpenFolder());
@@ -119,6 +121,46 @@ public sealed class SettingsViewModel : ObservableObject
 
     /// <summary>开启开发人员模式前触发，供外部显示二次确认弹窗。返回 false 则取消启用。</summary>
     public event Func<bool>? ConfirmEnableDeveloperMode;
+
+    // ── 开机自启动 / 托盘常驻（即时生效并持久化）──────────────────────────
+    private bool _runAtStartup;
+    /// <summary>开机时自动启动：写入/删除当前用户的 Run 启动项（注册表为权威来源，无需管理员）。</summary>
+    public bool RunAtStartup
+    {
+        get => _runAtStartup;
+        set
+        {
+            if (!Set(ref _runAtStartup, value)) return;
+            var (ok, msg) = Services.Sys.AutoStart.Set(value);
+            if (!ok)
+            {
+                _runAtStartup = !value;   // revert UI on failure
+                OnPropertyChanged(nameof(RunAtStartup));
+                Dialogs.Show(Localizer.Format("settings.autostart.fail", msg), Localizer.T("settings.title"),
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            AuditLog.Action($"开机自启动：{(value ? "开启" : "关闭")}");
+        }
+    }
+
+    private bool _alwaysShowTray;
+    /// <summary>始终在系统托盘显示常驻图标：无论窗口是否最小化都常驻一个托盘图标。即时生效。</summary>
+    public bool AlwaysShowTray
+    {
+        get => _alwaysShowTray;
+        set
+        {
+            if (!Set(ref _alwaysShowTray, value)) return;
+            _s.AlwaysShowTray = value;
+            SettingsStore.Save(_s);
+            AuditLog.Action($"托盘常驻图标：{(value ? "开启" : "关闭")}");
+            AlwaysShowTrayChanged?.Invoke(value);
+        }
+    }
+
+    /// <summary>切换「托盘常驻图标」时触发，让主窗口立即显示 / 隐藏常驻托盘图标。</summary>
+    public event Action<bool>? AlwaysShowTrayChanged;
 
     // ── 关闭主窗口行为（即时持久化）────────────────────────────────────
     private string _closeAction;

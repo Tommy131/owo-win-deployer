@@ -4,6 +4,8 @@
   "tray.exit": "Exit",
   "tray.minimizedTitle": "Still running in the background",
   "tray.minimizedBody": "OwO! Win Deployer has been minimized to the tray. Double-click the icon to reopen, or right-click to quickly manage terminals / services and exit.",
+  "tray.resident.title": "Resident tray icon enabled",
+  "tray.resident.body": "A resident icon is now in the notification area. Windows 11 may tuck it into the “^” overflow — expand it and drag the icon onto the taskbar. Double-click to open the app, right-click to manage and exit.",
   "crash.dialogTitle": "An error occurred",
   "crash.dialogBody": "An error occurred (logged to crash.log; the app will keep running):\n\n{0}\n\n{1}",
   "update.selfFoundBody": "A new version of {0} v{1} is available (current v{2}).\n\nGo to the releases page to download the update?"

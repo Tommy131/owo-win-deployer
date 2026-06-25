@@ -38,6 +38,7 @@ public sealed class MainViewModel : LocalizedObject
     public LogViewModel Logs { get; } = new();
     public SettingsViewModel Settings { get; } = new();
     public SystemOverviewViewModel SystemOverview { get; } = new();
+    public PowerViewModel Power { get; } = new();
     public MaintenanceViewModel Maintenance { get; } = new();
     public WslViewModel Wsl { get; } = new();
     public TweaksViewModel Tweaks { get; } = new();
@@ -209,6 +210,7 @@ public sealed class MainViewModel : LocalizedObject
 
         var system = new NavGroupViewModel("", "nav.group.system");
         system.Items.Add(new("", "nav.systemOverview", SystemOverview));
+        system.Items.Add(new("", "nav.power", Power, advanced: true));
         system.Items.Add(new("", "nav.maintenance", Maintenance, advanced: true));
         system.Items.Add(new("", "nav.processes", Processes, advanced: true));
         system.Items.Add(new("", "nav.startup", Startup, advanced: true));

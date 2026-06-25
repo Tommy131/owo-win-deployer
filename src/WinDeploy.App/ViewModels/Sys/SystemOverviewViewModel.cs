@@ -203,6 +203,19 @@ public sealed class SystemOverviewViewModel : LocalizedObject
     public string Activation { get => _activation; set => Set(ref _activation, value); }
     public string Battery { get => _battery; set => Set(ref _battery, value); }
 
+    // Activation detail (edition / channel / partial key / grace) — mirrors slmgr.vbs /dlv.
+    private string _activationDetail = "";
+    public string ActivationDetail { get => _activationDetail; set { if (Set(ref _activationDetail, value)) OnPropertyChanged(nameof(HasActivationDetail)); } }
+    public bool HasActivationDetail => !string.IsNullOrEmpty(_activationDetail);
+
+    // GPU — name + live temperature/load (below the processor in the summary card).
+    private string _gpu = "";
+    public string Gpu { get => _gpu; set => Set(ref _gpu, value); }
+    private string _gpuLive = "";
+    public string GpuLive { get => _gpuLive; set => Set(ref _gpuLive, value); }
+    private bool _hasGpu;
+    public bool HasGpu { get => _hasGpu; set => Set(ref _hasGpu, value); }
+
     // Live telemetry
     private string _cpuLive = Localizer.T("sysov.cpu.loadDash"), _ramLive = "—";
     public string CpuLive { get => _cpuLive; set => Set(ref _cpuLive, value); }
@@ -271,6 +284,15 @@ public sealed class SystemOverviewViewModel : LocalizedObject
             var tempPart = hw.CpuTemp is double tc && tc > 0 ? $"  ·  {tc:0} °C"
                          : Elevated ? "" : Localizer.T("sysov.cpu.needAdminTemp");
             CpuLive = Localizer.Format("sysov.cpu.loadTemp", load.ToString("0"), tempPart);
+        }
+
+        // GPU — temperature (and load when available). NVIDIA/AMD/Intel report these without admin.
+        if (hw.GpuTemp is double gt && gt > 0)
+        {
+            Gpu = string.IsNullOrWhiteSpace(hw.GpuName) ? Localizer.T("sysov.gpu.label") : hw.GpuName!;
+            var loadPart = hw.GpuLoad is double gl ? Localizer.Format("sysov.gpu.loadSuffix", gl.ToString("0")) : "";
+            GpuLive = Localizer.Format("sysov.gpu.tempLoad", gt.ToString("0"), loadPart);
+            HasGpu = true;
         }
 
         // Memory
@@ -407,6 +429,7 @@ public sealed class SystemOverviewViewModel : LocalizedObject
             ? Localizer.Format("sysov.uptime.days", (int)(s.UptimeHours / 24), (int)(s.UptimeHours % 24))
             : Localizer.Format("sysov.uptime.hours", s.UptimeHours.ToString("0.0"));
         Activation = s.Activation switch { 1 => Localizer.T("sysov.activation.active"), null => Localizer.T("sysov.activation.unknown"), _ => Localizer.T("sysov.activation.inactive") };
+        ActivationDetail = BuildActivationDetail(s);
         Battery = s.BatteryCharge is int c ? Localizer.Format("sysov.battery.charge", c) : Localizer.T("sysov.battery.none");
 
         Disks.Clear();
@@ -436,6 +459,22 @@ public sealed class SystemOverviewViewModel : LocalizedObject
                 DeviceId = p.DeviceId,
                 Bus = p.Bus,
             });
+    }
+
+    /// <summary>Compose the detailed activation lines (edition / channel / partial product key / grace),
+    /// the data slmgr.vbs /dlv surfaces. Empty when no licensing info was read.</summary>
+    private static string BuildActivationDetail(SystemSnapshot s)
+    {
+        var lines = new List<string>();
+        if (!string.IsNullOrWhiteSpace(s.ActName))
+            lines.Add(Localizer.Format("sysov.activation.edition", s.ActName.Trim()));
+        if (!string.IsNullOrWhiteSpace(s.ActDescription))
+            lines.Add(Localizer.Format("sysov.activation.channel", s.ActDescription.Trim()));
+        if (!string.IsNullOrWhiteSpace(s.PartialKey))
+            lines.Add(Localizer.Format("sysov.activation.partialKey", s.PartialKey.Trim()));
+        if (s.GraceMinutes is int g && g > 0)
+            lines.Add(Localizer.Format("sysov.activation.grace", (g / 1440)));   // minutes → whole days
+        return string.Join("\n", lines);
     }
 
     /// <summary>On language switch, re-localize the cached snapshot (no WMI reload) plus all bound props.</summary>

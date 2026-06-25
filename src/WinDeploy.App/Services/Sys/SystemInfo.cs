@@ -80,7 +80,12 @@ public sealed class SystemSnapshot
     public long FreeMemKb { get; set; }
     public double UptimeHours { get; set; }
     public int? BatteryCharge { get; set; }
-    public int? Activation { get; set; }   // 1 = licensed
+    public int? Activation { get; set; }   // LicenseStatus: 1 = licensed (see slmgr.vbs /dli)
+    // Activation detail (mirrors slmgr.vbs /dlv fields on the SoftwareLicensingProduct CIM class).
+    public string? ActName { get; set; }          // e.g. "Windows(R), Professional edition"
+    public string? ActDescription { get; set; }   // e.g. "Windows(R) Operating System, RETAIL channel"
+    public string? PartialKey { get; set; }        // last 5 chars of the product key
+    public int? GraceMinutes { get; set; }         // remaining grace period, in minutes (0 / null = fully activated)
     public List<DiskInfo> Disks { get; } = new();
     public List<PhysDiskInfo> PhysicalDisks { get; } = new();
 }
@@ -98,8 +103,14 @@ public static class SystemInfo
         $bat = Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue | Select-Object -First 1
         $phys = @()
         try { $phys = @(Get-PhysicalDisk -ErrorAction Stop | Select-Object FriendlyName,MediaType,BusType,HealthStatus,DeviceId,@{n='SizeGB';e={[math]::Round($_.Size/1GB,0)}}) } catch {}
-        $act = $null
-        try { $act = (Get-CimInstance SoftwareLicensingProduct -Filter "ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f' AND PartialProductKey IS NOT NULL" -ErrorAction Stop | Select-Object -First 1).LicenseStatus } catch {}
+        # Windows licensing — same source slmgr.vbs /dlv reads: the Windows SoftwareLicensingProduct (by the
+        # Windows ApplicationID), preferring the actively-licensed SKU. Name=edition, Description=channel,
+        # PartialProductKey=last 5 of the key, GracePeriodRemaining=minutes left in any grace window.
+        $lic = $null
+        try {
+          $lic = Get-CimInstance SoftwareLicensingProduct -Filter "ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f' AND LicenseStatus=1" -ErrorAction Stop | Select-Object -First 1
+          if (-not $lic) { $lic = Get-CimInstance SoftwareLicensingProduct -Filter "ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f' AND PartialProductKey IS NOT NULL" -ErrorAction Stop | Select-Object -First 1 }
+        } catch {}
         $uptime = [math]::Round(((Get-Date) - $os.LastBootUpTime).TotalHours, 1)
         [pscustomobject]@{
           OsCaption=$os.Caption; OsVersion=$os.Version; Arch=$os.OSArchitecture;
@@ -107,7 +118,12 @@ public static class SystemInfo
           Manufacturer=$cs.Manufacturer; Model=$cs.Model; User=$cs.UserName;
           CpuName=$cpu.Name; CpuLoad=$cpu.LoadPercentage; Cores=$cpu.NumberOfCores; Threads=$cpu.NumberOfLogicalProcessors;
           Disks=$disks; BatteryCharge=$(if($bat){$bat.EstimatedChargeRemaining}else{$null});
-          PhysicalDisks=$phys; Activation=$act
+          PhysicalDisks=$phys;
+          Activation=$(if($lic){$lic.LicenseStatus}else{$null});
+          ActName=$(if($lic){$lic.Name}else{$null});
+          ActDescription=$(if($lic){$lic.Description}else{$null});
+          PartialKey=$(if($lic){$lic.PartialProductKey}else{$null});
+          GraceMinutes=$(if($lic){$lic.GracePeriodRemaining}else{$null})
         } | ConvertTo-Json -Depth 4 -Compress
         """;
 
@@ -138,6 +154,10 @@ public static class SystemInfo
             snap.UptimeHours = Dbl(e, "UptimeHours");
             if (e.TryGetProperty("BatteryCharge", out var bc) && bc.ValueKind == JsonValueKind.Number) snap.BatteryCharge = bc.GetInt32();
             if (e.TryGetProperty("Activation", out var ac) && ac.ValueKind == JsonValueKind.Number) snap.Activation = ac.GetInt32();
+            snap.ActName = Str(e, "ActName");
+            snap.ActDescription = Str(e, "ActDescription");
+            snap.PartialKey = Str(e, "PartialKey");
+            if (e.TryGetProperty("GraceMinutes", out var gmin) && gmin.ValueKind == JsonValueKind.Number) snap.GraceMinutes = gmin.GetInt32();
 
             foreach (var d in Items(e, "Disks"))
                 snap.Disks.Add(new DiskInfo(Str(d, "DeviceID") ?? "?", Num(d, "Size"), Num(d, "FreeSpace"), Str(d, "VolumeName")));

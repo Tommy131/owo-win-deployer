@@ -4,6 +4,8 @@
   "tray.exit": "Beenden",
   "tray.minimizedTitle": "Läuft weiterhin im Hintergrund",
   "tray.minimizedBody": "OwO! Win Deployer wurde in den Infobereich minimiert. Doppelklicken Sie auf das Symbol, um es wieder zu öffnen, oder klicken Sie mit der rechten Maustaste, um Terminals / Dienste schnell zu verwalten und zu beenden.",
+  "tray.resident.title": "Dauerhaftes Infobereichssymbol aktiviert",
+  "tray.resident.body": "Ein dauerhaftes Symbol ist jetzt im Infobereich. Windows 11 legt es evtl. in den „^“-Überlauf — aufklappen und das Symbol auf die Taskleiste ziehen. Doppelklick öffnet die App, Rechtsklick zum Verwalten und Beenden.",
   "crash.dialogTitle": "Ein Fehler ist aufgetreten",
   "crash.dialogBody": "Ein Fehler ist aufgetreten (in crash.log protokolliert; die App läuft weiter):\n\n{0}\n\n{1}",
   "update.selfFoundBody": "Eine neue Version von {0} v{1} ist verfügbar (aktuell v{2}).\n\nZur Releases-Seite, um das Update herunterzuladen?"

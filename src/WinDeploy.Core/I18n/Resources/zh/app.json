@@ -4,6 +4,8 @@
   "tray.exit": "退出",
   "tray.minimizedTitle": "仍在后台运行",
   "tray.minimizedBody": "OwO! Win Deployer 已最小化到托盘。双击图标可重新打开，右键可快速管理终端 / 服务并退出。",
+  "tray.resident.title": "常驻图标已开启",
+  "tray.resident.body": "已在任务栏通知区域常驻。Windows 11 可能将其收入「^」溢出区——展开后可拖到任务栏上；双击图标唤起主界面，右键可快速管理并退出。",
   "crash.dialogTitle": "出现错误",
   "crash.dialogBody": "操作出错（已记录到 crash.log，应用将继续运行）：\n\n{0}\n\n{1}",
   "update.selfFoundBody": "发现新版本 {0} v{1}（当前 v{2}）。\n\n是否前往发布页下载更新？"

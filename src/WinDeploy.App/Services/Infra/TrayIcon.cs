@@ -105,12 +105,13 @@ public sealed class TrayIcon : IDisposable
         return SystemIcons.Application;
     }
 
-    /// <summary>Show the tray icon; pops a one-time hint the first time. Prefers a modern toast (correctly
-    /// shows the app name + icon); falls back to the legacy NotifyIcon balloon if toasts are unavailable.</summary>
-    public void Show()
+    /// <summary>Show the tray icon. When <paramref name="hint"/> is true, pops a one-time "still running" hint
+    /// the first time (used for explicit minimize-to-tray); pass false for always-resident mode so the icon
+    /// appears silently. Prefers a modern toast; falls back to the legacy NotifyIcon balloon.</summary>
+    public void Show(bool hint = true)
     {
         _icon.Visible = true;
-        if (_tipShown) return;
+        if (!hint || _tipShown) return;
         _tipShown = true;
 
         var title = Localizer.T("tray.minimizedTitle");
@@ -122,6 +123,22 @@ public sealed class TrayIcon : IDisposable
             _icon.BalloonTipTitle = title;
             _icon.BalloonTipText = body;
             _icon.ShowBalloonTip(3000);
+        }
+        catch { /* balloons can be suppressed by policy */ }
+    }
+
+    /// <summary>Show a one-off notification (modern toast, falling back to the legacy balloon), independent of
+    /// the minimize hint. Used to confirm the always-resident icon is now in the notification area so the user
+    /// can find it (Windows 11 tucks new icons into the "^" overflow).</summary>
+    public void Notify(string title, string body)
+    {
+        _icon.Visible = true;
+        if (ToastService.TryShow(title, body)) return;
+        try
+        {
+            _icon.BalloonTipTitle = title;
+            _icon.BalloonTipText = body;
+            _icon.ShowBalloonTip(4000);
         }
         catch { /* balloons can be suppressed by policy */ }
     }

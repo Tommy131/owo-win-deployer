@@ -9,6 +9,12 @@ public sealed class HwSample
 {
     public double? CpuLoad { get; set; }
     public double? CpuTemp { get; set; }
+    public double? GpuTemp { get; set; }
+    public double? GpuLoad { get; set; }
+    /// <summary>Short display name of the GPU whose temperature was captured (prefers a discrete card).</summary>
+    public string? GpuName { get; set; }
+    /// <summary>Whether the captured GPU is a discrete NVIDIA/AMD card (so it wins over an iGPU reading).</summary>
+    internal bool GpuDiscrete { get; set; }
     public double? MemUsedGb { get; set; }
     public double? MemAvailGb { get; set; }
     /// <summary>NVIDIA GPU board power limit (W) for the GPU bar's 100% reference, or null (non-NVIDIA).</summary>
@@ -102,6 +108,19 @@ public static class HardwareMonitor
                                                  && (sensor.Name.Contains("Package") || sensor.Name.Contains("Tdie") || sensor.Name.Contains("Tctl") || sensor.Name.Contains("Core")):
                     s.CpuTemp = val;
                     break;
+                // GPU core temperature — works without admin (vendor APIs). Prefer a discrete card (NVIDIA/AMD)
+                // over an Intel iGPU when both are present.
+                case SensorType.Temperature when kind == "GPU" && sensor.Name.Contains("Core")
+                                                 && (s.GpuTemp == null || (IsDiscreteGpu(hw) && !s.GpuDiscrete)):
+                    s.GpuTemp = val;
+                    s.GpuName = Short(hw.Name);
+                    s.GpuDiscrete = IsDiscreteGpu(hw);
+                    break;
+                case SensorType.Load when kind == "GPU" && sensor.Name.Contains("GPU Core")
+                                          && (s.GpuLoad == null || IsDiscreteGpu(hw)):
+                    s.GpuLoad = val;
+                    s.GpuName ??= Short(hw.Name);
+                    break;
                 case SensorType.Data when hw.HardwareType == HardwareType.Memory && sensor.Name == "Memory Used":
                     s.MemUsedGb = val;
                     break;
@@ -111,6 +130,9 @@ public static class HardwareMonitor
             }
         }
     }
+
+    private static bool IsDiscreteGpu(IHardware hw)
+        => hw.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd;
 
     private static string Short(string name) => name.Length > 28 ? name[..28] + "…" : name;
 
