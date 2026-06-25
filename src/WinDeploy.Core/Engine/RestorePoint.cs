@@ -13,7 +13,9 @@ public static class RestorePoint
     public static async Task<(bool Ok, string Message)> CreateAsync(string description, CancellationToken ct = default)
     {
         // -RestorePointType MODIFY_SETTINGS is the right category for "about to change installed software".
-        var script = $"Checkpoint-Computer -Description \"{description.Replace("\"", "'")}\" -RestorePointType MODIFY_SETTINGS";
+        // Force UTF-8 console output so Proc (which reads as UTF-8) doesn't mojibake a localized failure message.
+        var script = "[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); "
+            + $"Checkpoint-Computer -Description \"{description.Replace("\"", "'")}\" -RestorePointType MODIFY_SETTINGS";
         ProcResult r;
         try
         {
