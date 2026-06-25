@@ -1,0 +1,19 @@
+{
+  "remote.title": "Remote-Bereitstellung",
+  "remote.subtitle": "Dieses Repo per SSH auf einen anderen Rechner übertragen (mit Ihrem vorhandenen SSH-Schlüssel; keine Passwörter) und dort einen Bereitstellungsbefehl ausführen. Der Zielrechner benötigt einen SSH-Server, der Ihren Schlüssel akzeptiert.",
+  "remote.host": "Host",
+  "remote.user": "Benutzer",
+  "remote.port": "Port",
+  "remote.dir": "Remote-Verzeichnis",
+  "remote.command": "Befehl",
+  "remote.test": "Verbindung testen",
+  "remote.deploy": "Übertragen & ausführen",
+  "remote.testing": "Verbindung wird getestet …",
+  "remote.deploying": "Übertragen und Ausführen …",
+  "remote.testOk": "Verbindung OK",
+  "remote.testFail": "Verbindung fehlgeschlagen",
+  "remote.needHost": "Bitte zuerst einen Host eingeben.",
+  "remote.done": "Remote-Bereitstellung abgeschlossen",
+  "remote.fail": "Remote-Bereitstellung fehlgeschlagen",
+  "remote.error": "Fehler: {0}"
+}

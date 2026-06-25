@@ -1,0 +1,19 @@
+{
+  "remote.title": "Remote deploy",
+  "remote.subtitle": "Push this repo to another machine over SSH (your existing SSH key; no passwords) and run a deploy command there. The remote needs an SSH server that accepts your key.",
+  "remote.host": "Host",
+  "remote.user": "User",
+  "remote.port": "Port",
+  "remote.dir": "Remote dir",
+  "remote.command": "Command",
+  "remote.test": "Test connection",
+  "remote.deploy": "Push & run",
+  "remote.testing": "Testing connection …",
+  "remote.deploying": "Pushing and running …",
+  "remote.testOk": "Connection OK",
+  "remote.testFail": "Connection failed",
+  "remote.needHost": "Enter a host first.",
+  "remote.done": "Remote deploy finished",
+  "remote.fail": "Remote deploy failed",
+  "remote.error": "Error: {0}"
+}

@@ -82,6 +82,7 @@ public sealed class ConfigSyncViewModel : ConfigPageBase
     public RelayCommand ApplyCommand { get; }
     public RelayCommand SshCommand { get; }
     public RelayCommand ApplyEnvCommand { get; }
+    public RelayCommand RemoteDeployCommand { get; }
 
     private bool _includeAsk;
     public bool IncludeAsk { get => _includeAsk; set => Set(ref _includeAsk, value); }
@@ -94,6 +95,8 @@ public sealed class ConfigSyncViewModel : ConfigPageBase
         ApplyCommand = new RelayCommand(async _ => await ApplyAsync(), _ => !IsBusy);
         SshCommand = new RelayCommand(async _ => await SshAsync(), _ => !IsBusy);
         ApplyEnvCommand = new RelayCommand(async _ => await ApplyEnvAsync(), _ => !IsBusy);
+        RemoteDeployCommand = new RelayCommand(_ =>
+            new RemoteDeployDialog(RepoRoot) { Owner = System.Windows.Application.Current.MainWindow }.ShowDialog());
     }
 
     protected override void OnInitialized()

@@ -1,0 +1,19 @@
+{
+  "remote.title": "远程部署",
+  "remote.subtitle": "通过 SSH 把本仓库推送到另一台机器（使用你已有的 SSH 密钥，无需密码），并在对端运行部署命令。对端需有 SSH 服务并已信任你的密钥。",
+  "remote.host": "主机",
+  "remote.user": "用户",
+  "remote.port": "端口",
+  "remote.dir": "远程目录",
+  "remote.command": "命令",
+  "remote.test": "测试连接",
+  "remote.deploy": "推送并执行",
+  "remote.testing": "正在测试连接 …",
+  "remote.deploying": "正在推送并执行 …",
+  "remote.testOk": "连接正常",
+  "remote.testFail": "连接失败",
+  "remote.needHost": "请先填写主机地址。",
+  "remote.done": "远程部署完成",
+  "remote.fail": "远程部署失败",
+  "remote.error": "错误：{0}"
+}
