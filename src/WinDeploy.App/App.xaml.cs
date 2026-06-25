@@ -4,6 +4,10 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 using WinDeploy.App.Services;
+using WinDeploy.Core;
+using WinDeploy.Core.Config;
+using WinDeploy.Core.Engine;
+using WinDeploy.Core.Engine.Installers;
 using WinDeploy.Core.I18n;
 
 namespace WinDeploy.App;
@@ -21,6 +25,15 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Headless capture (used by the scheduled-export Task Scheduler job): capture configs and exit, WITHOUT
+        // the single-instance guard (it must run even while the GUI is open) and without showing a window.
+        if (e.Args.Length >= 1 && e.Args[0] == "--capture")
+        {
+            RunHeadlessCapture(e.Args.Length >= 2 ? e.Args[1] : null);
+            Shutdown();
+            return;
+        }
+
         // Only the first instance proceeds. A duplicate launch signals the running instance to come to the
         // foreground, then shuts itself down before creating any window.
         _instanceMutex = new Mutex(initiallyOwned: true, InstanceMutexName, out _isPrimary);
@@ -87,6 +100,32 @@ public partial class App : Application
         })
         { IsBackground = true, Name = "SingleInstanceActivate" };
         thread.Start();
+    }
+
+    /// <summary>Unattended config capture for the scheduled-export task: replicate the CLI "export" pipeline
+    /// (catalog configs + environment/agent configs, non-sensitive) and log the result. No UI.</summary>
+    private static void RunHeadlessCapture(string? repoRootArg)
+    {
+        var log = Path.Combine(SettingsStore.Folder, "capture.log");
+        void W(string m) { try { Directory.CreateDirectory(SettingsStore.Folder); File.AppendAllText(log, $"{DateTime.Now:O} {m}\n"); } catch { } }
+        try
+        {
+            var catalogDir = repoRootArg is { Length: > 0 } && File.Exists(Path.Combine(repoRootArg, "catalog", "catalog.json"))
+                ? Path.Combine(repoRootArg, "catalog")
+                : CatalogLoader.FindCatalogDir(AppContext.BaseDirectory)
+                  ?? CatalogLoader.FindCatalogDir(Directory.GetCurrentDirectory());
+            if (catalogDir is null) { W("capture skipped: catalog not found"); return; }
+
+            var root = Path.GetDirectoryName(catalogDir)!;
+            var cat = CatalogLoader.Load(Path.Combine(catalogDir, "catalog.json"));
+            var pr = new PathResolver(cat.PathVars);
+            var ctx = new EngineContext { Path = pr, RepoRoot = root, Ct = CancellationToken.None };
+            var cfg = new ConfigEngine().ExportAsync(cat, ctx, it => Detection.IsInstalledAsync(it, pr)).GetAwaiter().GetResult();
+            var env = EnvCapture.Capture(root, allowSensitive: false);   // never auto-export secrets unattended
+            var ok = cfg.Count(r => r.Status == StepStatus.Ok) + env.Count(r => r.Status == StepStatus.Ok);
+            W($"capture done: {ok} source(s) written to configs/ under {root}");
+        }
+        catch (Exception ex) { W("capture error: " + ex.Message); }
     }
 
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

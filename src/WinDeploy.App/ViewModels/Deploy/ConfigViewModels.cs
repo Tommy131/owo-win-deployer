@@ -186,7 +186,60 @@ public sealed class ExportViewModel : ConfigPageBase
     public bool Done { get => _done; set => Set(ref _done, value); }
 
     public ExportViewModel()
-        => ExportCommand = new RelayCommand(async _ => await ExportAsync(), _ => !IsBusy);
+    {
+        ExportCommand = new RelayCommand(async _ => await ExportAsync(), _ => !IsBusy);
+        _ = LoadScheduleStateAsync();
+    }
+
+    // ── 定时采集（Scheduled capture via Task Scheduler）─────────────────────────────
+    private bool _loadingSchedule;
+    private bool _scheduleEnabled;
+    public bool ScheduleEnabled
+    {
+        get => _scheduleEnabled;
+        set { if (Set(ref _scheduleEnabled, value) && !_loadingSchedule) _ = ApplyScheduleAsync(); }
+    }
+
+    private int _scheduleFreqIndex;   // 0 daily · 1 weekly · 2 on logon
+    public int ScheduleFreqIndex
+    {
+        get => _scheduleFreqIndex;
+        set { if (Set(ref _scheduleFreqIndex, value) && !_loadingSchedule && _scheduleEnabled) _ = ApplyScheduleAsync(); }
+    }
+
+    private string _scheduleNote = "";
+    public string ScheduleNote { get => _scheduleNote; set => Set(ref _scheduleNote, value); }
+
+    private async Task LoadScheduleStateAsync()
+    {
+        var on = await ScheduledExport.IsRegisteredAsync();
+        _loadingSchedule = true;
+        ScheduleEnabled = on;
+        _loadingSchedule = false;
+    }
+
+    private async Task ApplyScheduleAsync()
+    {
+        if (_scheduleEnabled)
+        {
+            var exe = Environment.ProcessPath;
+            if (string.IsNullOrEmpty(exe) || string.IsNullOrEmpty(RepoRoot))
+            {
+                ScheduleNote = Localizer.T("export.schedule.fail");
+                return;
+            }
+            var freq = (ScheduledExport.Frequency)_scheduleFreqIndex;
+            var (ok, msg) = await ScheduledExport.RegisterAsync(exe, RepoRoot, freq);
+            ScheduleNote = ok ? Localizer.T("export.schedule.on") : Localizer.Format("export.schedule.failMsg", msg);
+            if (ok) AuditLog.Action($"已登记定时采集任务（{freq}）");
+        }
+        else
+        {
+            var (ok, msg) = await ScheduledExport.UnregisterAsync();
+            ScheduleNote = ok ? Localizer.T("export.schedule.off") : Localizer.Format("export.schedule.failMsg", msg);
+            if (ok) AuditLog.Action("已移除定时采集任务");
+        }
+    }
 
     private async Task ExportAsync()
     {
