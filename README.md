@@ -15,7 +15,7 @@ Replicate your entire Windows development environment, applications, and persona
 
 Supports **Chinese (zh) / English (en) / Deutsch (de)** with live in-app language switching.
 
-> **Current version: v1.2.5.1** &nbsp;|&nbsp; 🌐 [中文说明](README_CH.md)
+> **Current version: v1.2.5.2** &nbsp;|&nbsp; 🌐 [中文说明](README_CH.md)
 
 ## Table of Contents
 

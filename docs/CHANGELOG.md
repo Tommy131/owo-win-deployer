@@ -6,6 +6,20 @@
 
 ---
 
+## v1.2.5.2 — 2026-06-29
+
+### 新增
+- **软件清单大幅扩充（+50 款）**：新增 50 款国内外主流生产力 / 娱乐 / 常用软件 —— 办公文档（Adobe Acrobat Reader、Foxit PDF Reader、SumatraPDF、LibreOffice、Notion、Obsidian、Joplin、Thunderbird、Slack、Microsoft Teams、Signal）、图像音视频（GIMP、Krita、Inkscape、Blender、Paint.NET、Audacity、mpv、MPC-HC）、浏览器（Brave、Opera、Vivaldi）、下载 / 网盘 / 安全（qBittorrent、Motrix、Rufus、WizTree、CCleaner、WinMerge、Flow Launcher、Google Drive、Dropbox、VeraCrypt、Bitwarden、KeePassXC、Wireshark、Sysinternals）、数据库 / API（PuTTY、pgAdmin、Insomnia）、开发工具链（GitHub Desktop、nvm-windows、Bun、Deno、Yarn、Temurin JDK 21、PostgreSQL 17、ngrok）、IDE（IntelliJ IDEA CE、PyCharm CE、JetBrains Toolbox）。全部经 winget 校验可装；GUI 软件以 winget id 检测、CLI 工具以命令检测，规避显示名前缀误判；中 / 英 / 德三语简介齐全。
+- **官网链接右键菜单**：软件详情页「官网」链接新增右键菜单，可「复制链接」或「打开链接」（中 / 英 / 德三语）。
+
+### 调整
+- **ngrok 归类**：从「开发工具链」移至「网络代理」分类（与 v2rayN、cc-switch 同组），更贴合其内网穿透 / 隧道定位。
+
+### 删除
+- 无。
+
+---
+
 ## v1.2.5.1 — 2026-06-28
 
 ### 修复

@@ -13,7 +13,7 @@
 
 一键在任意 Windows 设备上**复刻开发环境、应用与个人配置**，并集成系统管理、终端、FTP、进程/服务管理、Cloudflare DDNS 等专业工具。支持中文 / English / Deutsch 运行时切换。完整设计文档见 [`docs/DESIGN.md`](docs/DESIGN.md)。
 
-> **当前版本：v1.2.5.1** &nbsp;|&nbsp; 🌐 [English README](README.md)
+> **当前版本：v1.2.5.2** &nbsp;|&nbsp; 🌐 [English README](README.md)
 
 ## 目录
 
