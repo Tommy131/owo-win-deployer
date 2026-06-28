@@ -1,0 +1,9 @@
+<Project>
+
+  <!-- 跨产物单一版本源（SSOT）：App / CLI / Core 全部继承此 <Version>，版本号不再散落各 csproj。
+       发布改版本 = 只改这一处；scripts/check-version-sync.ps1 校验 README 顶部版本行与此一致。 -->
+  <PropertyGroup>
+    <Version>1.2.5.2</Version>
+  </PropertyGroup>
+
+</Project>

@@ -16,7 +16,7 @@
     <RootNamespace>WinDeploy.App</RootNamespace>
     <AssemblyName>WinDeploy</AssemblyName>
     <Product>OwO! Win Deployer</Product>
-    <Version>1.2.5.2</Version>
+    <!-- 版本号见根 Directory.Build.props（App / CLI / Core 跨产物单一来源） -->
     <AssemblyTitle>OwO! Win Deployer</AssemblyTitle>
     <Description>OwO! Win Deployer — 一键复刻 Windows 开发环境、应用与个人配置</Description>
     <Authors>Tommy131</Authors>
