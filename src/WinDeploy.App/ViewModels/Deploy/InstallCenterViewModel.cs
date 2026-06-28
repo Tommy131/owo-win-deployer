@@ -56,6 +56,7 @@ public sealed class InstallCenterViewModel : LocalizedObject
     public RelayCommand ShowAllGroupsCommand { get; }
     public RelayCommand HideAllGroupsCommand { get; }
     public RelayCommand SaveProfileCommand { get; }
+    public RelayCommand ClearSearchCommand { get; }
     private Dictionary<string, bool>? _snapshot;
 
     /// <summary>Raised when the user clicks 刷新 (re-detect installed status + update availability).</summary>
@@ -105,6 +106,7 @@ public sealed class InstallCenterViewModel : LocalizedObject
         ShowAllGroupsCommand = new RelayCommand(_ => SetAllGroups(true));
         HideAllGroupsCommand = new RelayCommand(_ => SetAllGroups(false));
         SaveProfileCommand = new RelayCommand(_ => SaveCurrentAsProfile(), _ => SelectedCount > 0);
+        ClearSearchCommand = new RelayCommand(_ => SearchText = "");
     }
 
     /// <summary>Save the currently-checked items as a reusable profile under catalog/profiles/.</summary>
@@ -326,8 +328,9 @@ public sealed class InstallCenterViewModel : LocalizedObject
     public string SearchText
     {
         get => _searchText;
-        set { if (Set(ref _searchText, value)) ApplyFilter(); }
+        set { if (Set(ref _searchText, value)) { OnPropertyChanged(nameof(HasSearchText)); ApplyFilter(); } }
     }
+    public bool HasSearchText => !string.IsNullOrEmpty(_searchText);
 
     private string? _selectedProfile;
     public string? SelectedProfile

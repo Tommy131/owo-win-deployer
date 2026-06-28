@@ -57,6 +57,7 @@
   "install.refreshTip": "Re-detect installed status and available updates",
   "install.restore": "Restore",
   "install.restoreTip": "Restore the selection from before the last Select-all / Invert / profile switch",
+  "install.searchClear": "Clear search",
   "install.searchTip": "Search: filter the list by name / summary / id",
   "install.searchWatermark": "Search software…",
   "install.selectAll": "Select all",

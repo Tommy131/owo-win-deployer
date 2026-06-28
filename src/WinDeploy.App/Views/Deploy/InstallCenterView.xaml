@@ -75,9 +75,9 @@
       </StackPanel>
 
       <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-        <!-- 搜索框（带水印 + 说明） -->
+        <!-- 搜索框（带水印 + 清除按钮） -->
         <Grid Width="150" Height="32" ToolTip="{DynamicResource S.install.searchTip}">
-          <TextBox VerticalContentAlignment="Center" Padding="8,0"
+          <TextBox VerticalContentAlignment="Center" Padding="8,0,26,0"
                    Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
           <TextBlock Text="{DynamicResource S.install.searchWatermark}" Foreground="{DynamicResource TextTertiary}" Margin="10,0,0,0"
                      VerticalAlignment="Center" IsHitTestVisible="False">
@@ -90,6 +90,26 @@
               </Style>
             </TextBlock.Style>
           </TextBlock>
+          <!-- 清除按钮：有搜索词时出现在输入框右侧 -->
+          <Button HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0"
+                  Width="20" Height="20" Cursor="Hand"
+                  Visibility="{Binding HasSearchText, Converter={StaticResource BoolToVis}}"
+                  Command="{Binding ClearSearchCommand}" ToolTip="{DynamicResource S.install.searchClear}">
+            <Button.Template>
+              <ControlTemplate TargetType="Button">
+                <Border x:Name="Bg" Background="Transparent" CornerRadius="10">
+                  <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                             Foreground="{DynamicResource TextTertiary}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <ControlTemplate.Triggers>
+                  <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Bg" Property="Background" Value="{DynamicResource BorderSoft}" />
+                  </Trigger>
+                </ControlTemplate.Triggers>
+              </ControlTemplate>
+            </Button.Template>
+          </Button>
         </Grid>
 
         <!-- 预设下拉（带水印 + 说明） -->

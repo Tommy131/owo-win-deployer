@@ -57,6 +57,7 @@
   "install.refreshTip": "Installationsstatus und verfügbare Updates erneut erkennen",
   "install.restore": "Wiederherstellen",
   "install.restoreTip": "Die Auswahl von vor dem letzten Alle-auswählen / Umkehren / Profilwechsel wiederherstellen",
+  "install.searchClear": "Suche leeren",
   "install.searchTip": "Suche: Liste nach Name / Beschreibung / id filtern",
   "install.searchWatermark": "Software suchen…",
   "install.selectAll": "Alle auswählen",

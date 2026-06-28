@@ -57,6 +57,7 @@
   "install.refreshTip": "重新检测本机软件安装状态与可用更新",
   "install.restore": "恢复",
   "install.restoreTip": "恢复到上一次「全选 / 反选 / 切换预设」之前的勾选状态",
+  "install.searchClear": "清空搜索",
   "install.searchTip": "搜索：按名称 / 简介 / id 过滤软件列表",
   "install.searchWatermark": "搜索软件…",
   "install.selectAll": "全选",
