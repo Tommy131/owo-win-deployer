@@ -315,6 +315,12 @@
       "install": { "method": "github-release" },
       "detect": { "path": "${ToolsDir}/cc-switch", "arp": "CC Switch" } },
 
+    { "id": "ngrok", "name": "ngrok", "summary": "内网穿透 / 安全隧道", "icon": "assets/icons/ngrok.svg",
+      "category": "proxy", "default": false,
+      "homepage": "https://ngrok.com",
+      "install": { "method": "winget", "id": "Ngrok.Ngrok" },
+      "detect": { "cmd": "ngrok" } },
+
     { "id": "7zip", "name": "7-Zip", "summary": "压缩 / 解压工具", "icon": "assets/icons/7zip.svg",
       "category": "tools", "default": false,
       "homepage": "https://www.7-zip.org",
@@ -737,6 +743,267 @@
       "homepage": "https://tomcat.apache.org/",
       "install": { "method": "portable", "url": "https://archive.apache.org/dist/tomcat/tomcat-10/v10.1.34/bin/apache-tomcat-10.1.34-windows-x64.zip",
         "extractTo": "${ToolsDir}/tomcat", "strip": 1 },
-      "detect": { "path": "${ToolsDir}/tomcat/bin/catalina.bat", "envVar": "CATALINA_HOME" } }
+      "detect": { "path": "${ToolsDir}/tomcat/bin/catalina.bat", "envVar": "CATALINA_HOME" } },
+
+    // ══════════════════════════════════════════════════════════════════
+    // ══ 国内外主流软件扩充（生产力 / 娱乐 / 常用） ════════════════════════
+    // 统一走 winget（detect 省略时由 install.id 兜底识别）；CLI 工具用 cmd 判据。
+    // ══════════════════════════════════════════════════════════════════
+
+    // ── 办公 / 生产力 / 文档 ─────────────────────────────
+    { "id": "acrobat-reader", "name": "Adobe Acrobat Reader", "summary": "PDF 阅读器（Adobe 官方）", "icon": "assets/icons/acrobat-reader.svg",
+      "category": "office", "default": false,
+      "homepage": "https://www.adobe.com/acrobat/pdf-reader.html",
+      "install": { "method": "winget", "id": "Adobe.Acrobat.Reader.64-bit" } },
+
+    { "id": "foxit-reader", "name": "Foxit PDF Reader", "summary": "福昕 PDF 阅读器", "icon": "assets/icons/foxit-reader.svg",
+      "category": "office", "default": false,
+      "homepage": "https://www.foxit.com",
+      "install": { "method": "winget", "id": "Foxit.FoxitReader" } },
+
+    { "id": "sumatra-pdf", "name": "SumatraPDF", "summary": "轻量 PDF / 电子书阅读器", "icon": "assets/icons/sumatra-pdf.svg",
+      "category": "office", "default": false,
+      "homepage": "https://www.sumatrapdfreader.org",
+      "install": { "method": "winget", "id": "SumatraPDF.SumatraPDF" } },
+
+    { "id": "libreoffice", "name": "LibreOffice", "summary": "开源办公套件（文档 / 表格 / 演示）", "icon": "assets/icons/libreoffice.svg",
+      "category": "office", "default": false,
+      "homepage": "https://www.libreoffice.org",
+      "install": { "method": "winget", "id": "TheDocumentFoundation.LibreOffice" } },
+
+    { "id": "notion", "name": "Notion", "summary": "笔记 / 知识库 / 团队协作", "icon": "assets/icons/notion.svg",
+      "category": "office", "default": false,
+      "homepage": "https://www.notion.so",
+      "install": { "method": "winget", "id": "Notion.Notion" } },
+
+    { "id": "obsidian", "name": "Obsidian", "summary": "本地 Markdown 知识库", "icon": "assets/icons/obsidian.svg",
+      "category": "office", "default": false,
+      "homepage": "https://obsidian.md",
+      "install": { "method": "winget", "id": "Obsidian.Obsidian" } },
+
+    { "id": "joplin", "name": "Joplin", "summary": "开源笔记 / 待办", "icon": "assets/icons/joplin.svg",
+      "category": "office", "default": false,
+      "homepage": "https://joplinapp.org",
+      "install": { "method": "winget", "id": "Joplin.Joplin" } },
+
+    { "id": "thunderbird", "name": "Mozilla Thunderbird", "summary": "邮件客户端", "icon": "assets/icons/thunderbird.svg",
+      "category": "office", "default": false,
+      "homepage": "https://www.thunderbird.net",
+      "install": { "method": "winget", "id": "Mozilla.Thunderbird" } },
+
+    { "id": "slack", "name": "Slack", "summary": "团队沟通协作", "icon": "assets/icons/slack.svg",
+      "category": "office", "default": false,
+      "homepage": "https://slack.com",
+      "install": { "method": "winget", "id": "SlackTechnologies.Slack" } },
+
+    { "id": "teams", "name": "Microsoft Teams", "summary": "团队协作 / 视频会议", "icon": "assets/icons/teams.svg",
+      "category": "office", "default": false,
+      "homepage": "https://www.microsoft.com/microsoft-teams",
+      "install": { "method": "winget", "id": "Microsoft.Teams" } },
+
+    { "id": "signal", "name": "Signal", "summary": "端到端加密通讯", "icon": "assets/icons/signal.svg",
+      "category": "office", "default": false,
+      "homepage": "https://signal.org",
+      "install": { "method": "winget", "id": "OpenWhisperSystems.Signal" } },
+
+    // ── 图像 / 音视频 / 创意 ─────────────────────────────
+    { "id": "gimp", "name": "GIMP", "summary": "开源图像编辑", "icon": "assets/icons/gimp.svg",
+      "category": "media", "default": false,
+      "homepage": "https://www.gimp.org",
+      "install": { "method": "winget", "id": "GIMP.GIMP" } },
+
+    { "id": "krita", "name": "Krita", "summary": "数字绘画 / 插画", "icon": "assets/icons/krita.svg",
+      "category": "media", "default": false,
+      "homepage": "https://krita.org",
+      "install": { "method": "winget", "id": "KDE.Krita" } },
+
+    { "id": "inkscape", "name": "Inkscape", "summary": "矢量图形编辑", "icon": "assets/icons/inkscape.svg",
+      "category": "media", "default": false,
+      "homepage": "https://inkscape.org",
+      "install": { "method": "winget", "id": "Inkscape.Inkscape" } },
+
+    { "id": "blender", "name": "Blender", "summary": "3D 建模 / 动画 / 渲染", "icon": "assets/icons/blender.svg",
+      "category": "media", "default": false,
+      "homepage": "https://www.blender.org",
+      "install": { "method": "winget", "id": "BlenderFoundation.Blender" } },
+
+    { "id": "paint-net", "name": "Paint.NET", "summary": "图像编辑（轻量 Photoshop 替代）", "icon": "assets/icons/paint-net.svg",
+      "category": "media", "default": false,
+      "homepage": "https://www.getpaint.net",
+      "install": { "method": "winget", "id": "dotPDN.PaintDotNet" } },
+
+    { "id": "audacity", "name": "Audacity", "summary": "音频录制 / 编辑", "icon": "assets/icons/audacity.svg",
+      "category": "media", "default": false,
+      "homepage": "https://www.audacityteam.org",
+      "install": { "method": "winget", "id": "Audacity.Audacity" } },
+
+    { "id": "mpv", "name": "mpv", "summary": "极简高性能视频播放器", "icon": "assets/icons/mpv.svg",
+      "category": "media", "default": false,
+      "homepage": "https://mpv.io",
+      "install": { "method": "winget", "id": "shinchiro.mpv" } },
+
+    { "id": "mpc-hc", "name": "MPC-HC", "summary": "经典视频播放器（Media Player Classic）", "icon": "assets/icons/mpc-hc.svg",
+      "category": "media", "default": false,
+      "homepage": "https://github.com/clsid2/mpc-hc",
+      "install": { "method": "winget", "id": "clsid2.mpc-hc" } },
+
+    // ── 浏览器 ─────────────────────────────
+    { "id": "brave", "name": "Brave", "summary": "隐私浏览器（内置广告拦截）", "icon": "assets/icons/brave.svg",
+      "category": "browser", "default": false,
+      "homepage": "https://brave.com",
+      "install": { "method": "winget", "id": "Brave.Brave" } },
+
+    { "id": "opera", "name": "Opera", "summary": "Opera 浏览器", "icon": "assets/icons/opera.svg",
+      "category": "browser", "default": false,
+      "homepage": "https://www.opera.com",
+      "install": { "method": "winget", "id": "Opera.Opera" } },
+
+    { "id": "vivaldi", "name": "Vivaldi", "summary": "高度可定制浏览器", "icon": "assets/icons/vivaldi.svg",
+      "category": "browser", "default": false,
+      "homepage": "https://vivaldi.com",
+      "install": { "method": "winget", "id": "Vivaldi.Vivaldi" } },
+
+    // ── 下载 / 网盘 / 安全 / 实用工具 ─────────────────────────────
+    { "id": "qbittorrent", "name": "qBittorrent", "summary": "开源 BT / 磁力下载", "icon": "assets/icons/qbittorrent.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.qbittorrent.org",
+      "install": { "method": "winget", "id": "qBittorrent.qBittorrent" } },
+
+    { "id": "motrix", "name": "Motrix", "summary": "全能下载工具（HTTP / BT / 磁力）", "icon": "assets/icons/motrix.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://motrix.app",
+      "install": { "method": "winget", "id": "agalwood.Motrix" } },
+
+    { "id": "rufus", "name": "Rufus", "summary": "U 盘启动盘制作", "icon": "assets/icons/rufus.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://rufus.ie",
+      "install": { "method": "winget", "id": "Rufus.Rufus" } },
+
+    { "id": "wiztree", "name": "WizTree", "summary": "磁盘空间分析（极速）", "icon": "assets/icons/wiztree.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://diskanalyzer.com",
+      "install": { "method": "winget", "id": "AntibodySoftware.WizTree" } },
+
+    { "id": "ccleaner", "name": "CCleaner", "summary": "系统清理 / 优化", "icon": "assets/icons/ccleaner.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.ccleaner.com",
+      "install": { "method": "winget", "id": "Piriform.CCleaner" } },
+
+    { "id": "winmerge", "name": "WinMerge", "summary": "文件 / 文件夹对比合并", "icon": "assets/icons/winmerge.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://winmerge.org",
+      "install": { "method": "winget", "id": "WinMerge.WinMerge" } },
+
+    { "id": "flow-launcher", "name": "Flow Launcher", "summary": "快速启动器 / 搜索", "icon": "assets/icons/flow-launcher.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.flowlauncher.com",
+      "install": { "method": "winget", "id": "Flow-Launcher.Flow-Launcher" } },
+
+    { "id": "google-drive", "name": "Google Drive", "summary": "Google 云端硬盘同步", "icon": "assets/icons/google-drive.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.google.com/drive/",
+      "install": { "method": "winget", "id": "Google.GoogleDrive" } },
+
+    { "id": "dropbox", "name": "Dropbox", "summary": "云存储 / 文件同步", "icon": "assets/icons/dropbox.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.dropbox.com",
+      "install": { "method": "winget", "id": "Dropbox.Dropbox" } },
+
+    { "id": "veracrypt", "name": "VeraCrypt", "summary": "磁盘 / 分区加密", "icon": "assets/icons/veracrypt.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.veracrypt.fr",
+      "install": { "method": "winget", "id": "IDRIX.VeraCrypt" } },
+
+    { "id": "bitwarden", "name": "Bitwarden", "summary": "开源密码管理器", "icon": "assets/icons/bitwarden.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://bitwarden.com",
+      "install": { "method": "winget", "id": "Bitwarden.Bitwarden" } },
+
+    { "id": "keepassxc", "name": "KeePassXC", "summary": "本地密码库", "icon": "assets/icons/keepassxc.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://keepassxc.org",
+      "install": { "method": "winget", "id": "KeePassXCTeam.KeePassXC" } },
+
+    { "id": "wireshark", "name": "Wireshark", "summary": "网络协议抓包分析", "icon": "assets/icons/wireshark.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://www.wireshark.org",
+      "install": { "method": "winget", "id": "WiresharkFoundation.Wireshark" } },
+
+    { "id": "sysinternals", "name": "Sysinternals Suite", "summary": "微软系统工具套件（Process Explorer 等）", "icon": "assets/icons/sysinternals.svg",
+      "category": "tools", "default": false,
+      "homepage": "https://learn.microsoft.com/sysinternals/",
+      "install": { "method": "winget", "id": "Microsoft.Sysinternals.Suite" } },
+
+    // ── 数据库 / API / 远程 ─────────────────────────────
+    { "id": "putty", "name": "PuTTY", "summary": "SSH / Telnet 客户端", "icon": "assets/icons/putty.svg",
+      "category": "db-api", "default": false,
+      "homepage": "https://www.putty.org",
+      "install": { "method": "winget", "id": "PuTTY.PuTTY" } },
+
+    { "id": "pgadmin", "name": "pgAdmin 4", "summary": "PostgreSQL 图形管理工具", "icon": "assets/icons/pgadmin.svg",
+      "category": "db-api", "default": false,
+      "homepage": "https://www.pgadmin.org",
+      "install": { "method": "winget", "id": "PostgreSQL.pgAdmin" } },
+
+    { "id": "insomnia", "name": "Insomnia", "summary": "REST / GraphQL API 调试", "icon": "assets/icons/insomnia.svg",
+      "category": "db-api", "default": false,
+      "homepage": "https://insomnia.rest",
+      "install": { "method": "winget", "id": "Insomnia.Insomnia" } },
+
+    // ── 开发工具链 / 运行时 ─────────────────────────────
+    { "id": "github-desktop", "name": "GitHub Desktop", "summary": "Git 图形客户端（GitHub 官方）", "icon": "assets/icons/github-desktop.svg",
+      "category": "dev", "default": false,
+      "homepage": "https://desktop.github.com",
+      "install": { "method": "winget", "id": "GitHub.GitHubDesktop" } },
+
+    { "id": "nvm-windows", "name": "nvm for Windows", "summary": "Node.js 多版本管理", "icon": "assets/icons/nvm-windows.svg",
+      "category": "dev", "default": false,
+      "homepage": "https://github.com/coreybutler/nvm-windows",
+      "install": { "method": "winget", "id": "CoreyButler.NVMforWindows" },
+      "detect": { "cmd": "nvm" } },
+
+    { "id": "bun", "name": "Bun", "summary": "高性能 JavaScript 运行时 / 包管理", "icon": "assets/icons/bun.svg",
+      "category": "dev", "default": false,
+      "homepage": "https://bun.sh",
+      "install": { "method": "winget", "id": "Oven-sh.Bun" },
+      "detect": { "cmd": "bun" } },
+
+    { "id": "deno", "name": "Deno", "summary": "安全的 JavaScript / TypeScript 运行时", "icon": "assets/icons/deno.svg",
+      "category": "dev", "default": false,
+      "homepage": "https://deno.com",
+      "install": { "method": "winget", "id": "DenoLand.Deno" },
+      "detect": { "cmd": "deno" } },
+
+    { "id": "yarn", "name": "Yarn", "summary": "JavaScript 包管理器", "icon": "assets/icons/yarn.svg",
+      "category": "dev", "default": false,
+      "homepage": "https://yarnpkg.com",
+      "install": { "method": "winget", "id": "Yarn.Yarn" },
+      "detect": { "cmd": "yarn" } },
+
+    { "id": "temurin-jdk21", "name": "Eclipse Temurin JDK 21", "summary": "开源 OpenJDK 21（Adoptium）", "icon": "assets/icons/temurin-jdk21.svg",
+      "category": "dev", "default": false,
+      "homepage": "https://adoptium.net",
+      "install": { "method": "winget", "id": "EclipseAdoptium.Temurin.21.JDK" } },
+
+    { "id": "postgresql", "name": "PostgreSQL 17", "summary": "关系型数据库", "icon": "assets/icons/postgresql.svg",
+      "category": "dev", "default": false,
+      "homepage": "https://www.postgresql.org",
+      "install": { "method": "winget", "id": "PostgreSQL.PostgreSQL.17" } },
+
+    // ── IDE / 编辑器 ─────────────────────────────
+    { "id": "intellij-idea-ce", "name": "IntelliJ IDEA CE", "summary": "Java IDE（社区版）", "icon": "assets/icons/intellij-idea-ce.svg",
+      "category": "ide", "default": false,
+      "homepage": "https://www.jetbrains.com/idea/",
+      "install": { "method": "winget", "id": "JetBrains.IntelliJIDEA.Community" } },
+
+    { "id": "pycharm-ce", "name": "PyCharm CE", "summary": "Python IDE（社区版）", "icon": "assets/icons/pycharm-ce.svg",
+      "category": "ide", "default": false,
+      "homepage": "https://www.jetbrains.com/pycharm/",
+      "install": { "method": "winget", "id": "JetBrains.PyCharm.Community" } },
+
+    { "id": "jetbrains-toolbox", "name": "JetBrains Toolbox", "summary": "JetBrains IDE 管理器", "icon": "assets/icons/jetbrains-toolbox.svg",
+      "category": "ide", "default": false,
+      "homepage": "https://www.jetbrains.com/toolbox-app/",
+      "install": { "method": "winget", "id": "JetBrains.Toolbox" } }
   ]
 }
