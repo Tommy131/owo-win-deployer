@@ -8,6 +8,8 @@ obj/
 artifacts/
 publish/
 dist/
+# 本地 build.ps1 的自包含单文件产物（仅本机构建 / 测试用，绝不入库）
+build/
 
 # 便携模式：本机运行时数据（日志 / 设置 / 图标缓存 / FTP / Cloudflare / 剪贴板配置 / 报告 / 崩溃日志）
 # 统一写在 exe 旁的 data/（AppPaths.DataRoot），属于本机、绝不入库。
