@@ -36,6 +36,8 @@
   "clip.peers.manualPlaceholder": "Peer IP, e.g. 192.168.0.6",
   "clip.peers.manualConnect": "Connect",
   "clip.peers.manualBadIp": "Enter a valid IPv4 address (the peer's “This device” IP).",
+  "clip.peers.nicLabel": "Listen on NIC",
+  "clip.peers.nicAll": "All NICs (auto)",
 
   "clip.role.initiator": "inviter",
   "clip.role.joiner": "joiner",

@@ -347,6 +347,19 @@ public sealed class ClipSyncManager : IDisposable
         => $"开源版最多 {MaxPeers} 台设备共享（已连接 {Links.Count}/{MaxLinks}）。付费版可经服务器中转解除上限。";
 
     // ── settings ──────────────────────────────────────────────────────────────────────────────────────
+    /// <summary>Pin discovery to a single interface IP (or "" = all) and restart ONLY discovery so it applies
+    /// immediately, keeping existing links + the clipboard monitor running. Persisted for next launch.</summary>
+    public void SetDiscoveryInterface(string? ip)
+    {
+        var cfg = Running ? _config : ClipConfigStore.Load();
+        cfg.DiscoveryInterface = ip ?? "";
+        ClipConfigStore.Save(cfg);
+        if (!Running) return;
+        _config = cfg;
+        _discovery.Stop();
+        _discovery.Start(_config, _config.InstanceId, WinDeploy.App.AppInfo.Version);
+    }
+
     /// <summary>Apply edited settings live where possible (name, auto-apply, persistence, image cap) and
     /// persist them. Port / discovery-port changes take effect on the next start (returns true if a restart
     /// is needed to fully apply).</summary>

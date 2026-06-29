@@ -35,6 +35,10 @@
           </StackPanel>
           <TextBlock Text="{Binding SelfText}" FontSize="12.5" Foreground="{DynamicResource TextSecondary}" Margin="0,6,0,0" />
           <TextBlock Text="{Binding LocalAddresses}" FontSize="12" FontFamily="Consolas" Foreground="{DynamicResource TextTertiary}" Margin="0,3,0,0" TextWrapping="Wrap" />
+          <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+            <TextBlock Text="{DynamicResource S.clip.peers.nicLabel}" FontSize="12" Foreground="{DynamicResource TextTertiary}" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <ComboBox ItemsSource="{Binding Nics}" SelectedItem="{Binding SelectedNic}" DisplayMemberPath="Label" MinWidth="220" MaxWidth="340" />
+          </StackPanel>
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
           <Button Content="{DynamicResource S.clip.peers.start}" Style="{StaticResource OkButton}" Margin="0,0,8,0" Command="{Binding StartCommand}" />

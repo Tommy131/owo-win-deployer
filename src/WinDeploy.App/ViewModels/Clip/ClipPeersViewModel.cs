@@ -51,6 +51,14 @@ public sealed class ClipLinkRowVm : ObservableObject
     public RelayCommand DisconnectCommand { get; }
 }
 
+/// <summary>One entry in the 监听网卡 picker: a specific interface IP, or "" = all NICs (auto).</summary>
+public sealed class ClipNicVm
+{
+    public string Ip { get; }
+    public string Label { get; }
+    public ClipNicVm(string ip, string label) { Ip = ip; Label = label; }
+}
+
 /// <summary>设备与配对 tab: start/stop the share, see this device's identity + capacity, discover LAN peers
 /// and invite them (showing a PIN), manage active links, and watch a rolling activity log.</summary>
 public sealed class ClipPeersViewModel : LocalizedObject
@@ -70,10 +78,12 @@ public sealed class ClipPeersViewModel : LocalizedObject
         ConnectManualCommand = new RelayCommand(_ => ConnectManual(), _ => Running && !InviteInProgress);
         _manualPort = _manager.Config.Port.ToString();
         LocalAddresses = string.Join("   ", LocalIPv4());
+        LoadNics();
     }
 
     public ObservableCollection<ClipPeerRowVm> DiscoveredPeers { get; } = new();
     public ObservableCollection<ClipLinkRowVm> ActiveLinks { get; } = new();
+    public ObservableCollection<ClipNicVm> Nics { get; } = new();
 
     public RelayCommand StartCommand { get; }
     public RelayCommand StopCommand { get; }
@@ -106,6 +116,14 @@ public sealed class ClipPeersViewModel : LocalizedObject
     public string ManualIp { get => _manualIp; set => Set(ref _manualIp, value); }
     private string _manualPort = "";
     public string ManualPort { get => _manualPort; set => Set(ref _manualPort, value); }
+
+    // ── listen-NIC picker ──────────────────────────────────────────────────────────────────────────────
+    private ClipNicVm? _selectedNic;
+    public ClipNicVm? SelectedNic
+    {
+        get => _selectedNic;
+        set { if (Set(ref _selectedNic, value) && value != null) _manager.SetDiscoveryInterface(value.Ip); }
+    }
 
     // ── start / stop ───────────────────────────────────────────────────────────────────────────────────
     private void Start()
@@ -230,6 +248,19 @@ public sealed class ClipPeersViewModel : LocalizedObject
         base.OnCultureChanged();
         RefreshPeers();
         RefreshLinks();
+        LoadNics();
+    }
+
+    /// <summary>Populate the NIC picker (全部 + each up IPv4 interface) and select the persisted choice.</summary>
+    public void LoadNics()
+    {
+        Nics.Clear();
+        Nics.Add(new ClipNicVm("", Localizer.T("clip.peers.nicAll")));
+        foreach (var (ip, name) in PeerDiscovery.ListInterfaces())
+            Nics.Add(new ClipNicVm(ip, $"{ip}  ·  {name}"));
+        var sel = ClipConfigStore.Load().DiscoveryInterface ?? "";
+        _selectedNic = Nics.FirstOrDefault(n => n.Ip == sel) ?? Nics[0];
+        OnPropertyChanged(nameof(SelectedNic));
     }
 
     private static void Requery() => System.Windows.Input.CommandManager.InvalidateRequerySuggested();

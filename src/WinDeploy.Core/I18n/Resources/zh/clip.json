@@ -36,6 +36,8 @@
   "clip.peers.manualPlaceholder": "对方 IP，如 192.168.0.6",
   "clip.peers.manualConnect": "连接",
   "clip.peers.manualBadIp": "请输入有效的 IPv4 地址（对方「本机」显示的 IP）。",
+  "clip.peers.nicLabel": "监听网卡",
+  "clip.peers.nicAll": "全部网卡（自动）",
 
   "clip.role.initiator": "发起方",
   "clip.role.joiner": "加入方",

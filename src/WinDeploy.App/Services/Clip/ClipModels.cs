@@ -93,6 +93,11 @@ public sealed class ClipSyncConfig
     /// <summary>UDP port for the multicast presence beacon (discovery).</summary>
     public int DiscoveryPort { get; set; } = 47654;
 
+    /// <summary>Bind discovery to one interface IP (the real LAN NIC) instead of all of them; "" = all (auto).
+    /// Use when many virtual adapters (VMware / Hyper-V / WSL / VirtualBox) make auto-discovery pick the
+    /// wrong NIC. Manual connect-by-IP is unaffected by this.</summary>
+    public string DiscoveryInterface { get; set; } = "";
+
     /// <summary>When true, an arriving remote entry is also written to the local Windows clipboard
     /// (true "sync"); when false, it only enters the shared board for preview/manual copy. Default off.</summary>
     public bool AutoApplyToLocal { get; set; } = false;

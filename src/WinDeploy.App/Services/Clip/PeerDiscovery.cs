@@ -49,7 +49,7 @@ public sealed class PeerDiscovery : IDisposable
         _tcpPort = cfg.Port;
         _port = cfg.DiscoveryPort;
 
-        var ifaces = LocalIPv4Interfaces();
+        var ifaces = LocalIPv4Interfaces(cfg.DiscoveryInterface);
 
         // ── receiver: one socket on the port, joined to the group on EVERY interface ──
         var rx = new UdpClient(AddressFamily.InterNetwork);
@@ -179,7 +179,7 @@ public sealed class PeerDiscovery : IDisposable
     /// <summary>Every up, non-loopback IPv4 interface with its directed subnet broadcast address. Multicast
     /// join is attempted per-NIC (failures skipped); the directed broadcast still reaches NICs that can't
     /// multicast. A missing/zero mask falls back to the limited broadcast.</summary>
-    private static List<(IPAddress Ip, IPAddress Bcast)> LocalIPv4Interfaces()
+    private static List<(IPAddress Ip, IPAddress Bcast)> LocalIPv4Interfaces(string? onlyIp)
     {
         var list = new List<(IPAddress, IPAddress)>();
         try
@@ -194,6 +194,31 @@ public sealed class PeerDiscovery : IDisposable
                     if (IPAddress.IsLoopback(ua.Address)) continue;
                     list.Add((ua.Address, DirectedBroadcast(ua.Address, ua.IPv4Mask) ?? IPAddress.Broadcast));
                 }
+            }
+        }
+        catch { /* best effort */ }
+        // Pin to a single chosen NIC when set (and still present); otherwise use them all.
+        if (!string.IsNullOrWhiteSpace(onlyIp))
+        {
+            var pinned = list.Where(f => f.Item1.ToString() == onlyIp).ToList();
+            if (pinned.Count > 0) return pinned;
+        }
+        return list;
+    }
+
+    /// <summary>Up, non-loopback IPv4 interfaces (address + friendly adapter name) for the NIC picker.</summary>
+    public static IReadOnlyList<(string Ip, string Name)> ListInterfaces()
+    {
+        var list = new List<(string, string)>();
+        try
+        {
+            foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (ni.OperationalStatus != OperationalStatus.Up) continue;
+                if (ni.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue;
+                foreach (var ua in ni.GetIPProperties().UnicastAddresses)
+                    if (ua.Address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ua.Address))
+                        list.Add((ua.Address.ToString(), ni.Name));
             }
         }
         catch { /* best effort */ }
