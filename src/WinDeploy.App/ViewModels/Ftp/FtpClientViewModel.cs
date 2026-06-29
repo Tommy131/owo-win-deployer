@@ -280,13 +280,17 @@ public sealed class FtpClientViewModel : LocalizedObject
         try
         {
             long total = 0;   // pre-scan sizes for an accurate ETA (folders summed recursively)
-            foreach (var r in items) total += r.IsDir ? await _client.RemoteDirSizeAsync(r.Name, _cts!.Token) : r.Model.Size;
+            foreach (var r in items) total += r.IsDir ? await Task.Run(() => _client.RemoteDirSizeAsync(r.Name, _cts!.Token)) : r.Model.Size;
             BeginTransfer(Localizer.Format("ftp.client.batchDownload", items.Count), total);
             foreach (var r in items)
             {
                 _cts!.Token.ThrowIfCancellationRequested();
-                if (r.IsDir) await _client.DownloadDirectoryAsync(r.Name, LocalDir, onFile, counter, _cts.Token);
-                else { TransferTitle = Localizer.Format("ftp.client.downloadOne", r.Name); await _client.DownloadAsync(r.Name, Path.Combine(LocalDir, r.Name), counter, _cts.Token); }
+                // Run transfers on a thread-pool thread. The FTP client's async IO has no ConfigureAwait(false),
+                // so under the UI sync-context every chunk's continuation would post back to the UI thread —
+                // flooding it on large/fast transfers and freezing the GUI. Off the UI context the continuations
+                // run on the pool; UI updates (title/list) below resume on the UI thread after the await.
+                if (r.IsDir) await Task.Run(() => _client.DownloadDirectoryAsync(r.Name, LocalDir, onFile, counter, _cts!.Token));
+                else { TransferTitle = Localizer.Format("ftp.client.downloadOne", r.Name); await Task.Run(() => _client.DownloadAsync(r.Name, Path.Combine(LocalDir, r.Name), counter, _cts!.Token)); }
             }
             AuditLog.Action($"FTP 下载 {items.Count} 项 → {LocalDir}");
             Note = Localizer.Format("ftp.client.downloaded", items.Count, LocalDir);
@@ -313,8 +317,9 @@ public sealed class FtpClientViewModel : LocalizedObject
             foreach (var l in items)
             {
                 _cts!.Token.ThrowIfCancellationRequested();
-                if (l.IsDir) await _client.UploadDirectoryAsync(l.Path, l.Name, onFile, counter, _cts.Token);
-                else { TransferTitle = Localizer.Format("ftp.client.uploadOne", l.Name); await _client.UploadAsync(l.Path, l.Name, counter, _cts.Token); }
+                // Off the UI sync-context (see DownloadAsync) so IO continuations don't flood the UI thread.
+                if (l.IsDir) await Task.Run(() => _client.UploadDirectoryAsync(l.Path, l.Name, onFile, counter, _cts!.Token));
+                else { TransferTitle = Localizer.Format("ftp.client.uploadOne", l.Name); await Task.Run(() => _client.UploadAsync(l.Path, l.Name, counter, _cts!.Token)); }
             }
             AuditLog.Action($"FTP 上传 {items.Count} 项 → {RemoteDir}");
             Note = Localizer.Format("ftp.client.uploaded", items.Count, RemoteDir);
@@ -609,7 +614,7 @@ public sealed class FtpClientViewModel : LocalizedObject
             Directory.CreateDirectory(dir);
             var tmp = Path.Combine(dir, r.Name);
             Note = Localizer.Format("ftp.client.openingRemote", r.Name);
-            await _client.DownloadAsync(r.Name, tmp, null, _cts!.Token);
+            await Task.Run(() => _client.DownloadAsync(r.Name, tmp, null, _cts!.Token));   // off UI context — see DownloadAsync
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(tmp) { UseShellExecute = true });
             Note = Localizer.Format("ftp.client.openedRemote", r.Name);
         }
