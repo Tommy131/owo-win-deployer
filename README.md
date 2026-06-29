@@ -11,7 +11,7 @@
 
 ---
 
-Replicate your entire Windows development environment, applications, and personal dotfiles on any new machine with a single command — plus an integrated suite of system-administration, terminal, FTP, Cloudflare DDNS, and monitoring tools.
+Replicate your entire Windows development environment, applications, and personal dotfiles on any new machine with a single command — plus an integrated suite of system-administration, terminal, FTP, Cloudflare DDNS, LAN clipboard sync, and monitoring tools.
 
 Supports **Chinese (zh) / English (en) / Deutsch (de)** with live in-app language switching.
 
@@ -61,6 +61,7 @@ All milestones are complete:
 | M3 | WPF Software Install Center (icon cards, per-item checkboxes) + live progress + config/export pages | ✅ |
 | M4 | Self-contained single-EXE publish + Release CI + multi-machine sync (sync/save) + version locking | ✅ |
 | M5 | System management suite (terminal · FTP · processes · services · overview · maintenance · WSL · tweaks · Cloudflare DDNS) + Developer Mode gate | ✅ |
+| M6 | LAN clipboard sync — encrypted text + image sharing over the local network (UDP discovery · PIN pairing · AES-256-GCM) | ✅ |
 
 ### Software Install Center (M1 · M3)
 
@@ -104,6 +105,14 @@ All milestones are complete:
 - **Site manager (Saved Logins)**: saved credentials encrypted with DPAPI for quick reconnect
 - **FTPS trust-on-first-use (TOFU)**: records the certificate SHA-256 on first connect (`ftp_trust.json`); a changed cert is refused as a potential MITM
 - 15-second connect/TLS timeout; persistent config (port / TLS / encoding / rate limit etc.)
+
+### Clipboard Sync (M6 · Developer Mode)
+
+- **Discover & pair**: finds other machines on the LAN that also run OwO! WinDeploy (UDP multicast beacon — presence only), then pairs them with a one-time **6-digit PIN**. The PIN never goes on the wire — both sides prove it via a mutual HMAC challenge/response (PBKDF2), then derive an **AES-256-GCM** session key for an end-to-end encrypted link.
+- **Share text + images**: a shared board syncs both ways — preview entries, add text manually, **delete propagates across devices**, and copy any entry back to the local clipboard. Image thumbnails + a fit-to-pane preview; click to open full size in a window.
+- **Robust discovery**: per-interface multicast + directed subnet broadcast, a **listen-NIC picker** for machines with many virtual adapters, and a **manual connect-by-IP** fallback for networks that block multicast.
+- **Optional, off by default**: *auto-mirror to the local clipboard* (true sync) and *persist history to disk*; otherwise clipboard content stays in memory and clears on exit.
+- **Device cap**: the open-source build shares up to **2 devices**; the transport is abstracted for a future relay-server build that lifts the cap beyond the LAN.
 
 ### Process Manager (M5)
 
