@@ -2,6 +2,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using WinDeploy.Core.I18n;
 
@@ -101,7 +102,7 @@ public sealed class ClipboardMonitor : IDisposable
                 {
                     var img = Clipboard.GetImage();
                     if (img == null) return null;
-                    var png = EncodePng(img);
+                    var png = EncodePng(NormalizeAlpha(img));
                     if (png.Length > MaxImageBytes)
                     {
                         Log?.Invoke(Localizer.Format("clip.log.imageTooBig", png.Length / 1024));
@@ -119,6 +120,26 @@ public sealed class ClipboardMonitor : IDisposable
             catch { return null; }
         }
         return null;
+    }
+
+    /// <summary>Clipboard images (CF_DIB) frequently arrive with a zero/garbage alpha channel, so the shared
+    /// PNG decodes fine but renders fully transparent (invisible over the UI). If EVERY pixel is transparent,
+    /// force alpha to opaque so the picture actually shows; images that carry any real alpha are left as-is.</summary>
+    private static BitmapSource NormalizeAlpha(BitmapSource src)
+    {
+        try
+        {
+            var bgra = src.Format == PixelFormats.Bgra32 ? src : new FormatConvertedBitmap(src, PixelFormats.Bgra32, null, 0);
+            int w = bgra.PixelWidth, h = bgra.PixelHeight, stride = w * 4;
+            var px = new byte[h * stride];
+            bgra.CopyPixels(px, stride, 0);
+            for (var i = 3; i < px.Length; i += 4) if (px[i] != 0) return src;   // has real alpha — keep as-is
+            for (var i = 3; i < px.Length; i += 4) px[i] = 255;                  // fully transparent → force opaque
+            var fixedBmp = BitmapSource.Create(w, h, bgra.DpiX, bgra.DpiY, PixelFormats.Bgra32, null, px, stride);
+            fixedBmp.Freeze();
+            return fixedBmp;
+        }
+        catch { return src; }
     }
 
     private static byte[] EncodePng(BitmapSource src)
